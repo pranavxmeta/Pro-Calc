@@ -904,7 +904,7 @@ class _BaseShapePageState extends State<BaseShapePage>
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 16),
                         alignment: Alignment.centerLeft,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                             border: Border(
                                 bottom: BorderSide(
                                     color: CupertinoColors.systemGrey4,
@@ -1357,7 +1357,7 @@ class _BaseShapePageState extends State<BaseShapePage>
       );
     }
 
-    final bool applyShadow = true;
+    const bool applyShadow = true;
 
     VoidCallback actualOnPressed;
     if (onPressedOverride != null) {

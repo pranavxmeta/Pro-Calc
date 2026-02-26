@@ -68,7 +68,7 @@ class TriangleShapePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BaseShapePage(
+    return const BaseShapePage(
       title: title,
       shapeType: shapeType,
       parameters: parameters,

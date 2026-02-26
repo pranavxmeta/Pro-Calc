@@ -1612,8 +1612,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
         return CupertinoColors.activeBlue.withOpacity(0.5);
       case 'del':
         return isDarkMode
-            ? Color.fromRGBO(30, 30, 30, 1)
-            : Color.fromRGBO(229, 229, 234, 1);
+            ? const Color.fromRGBO(30, 30, 30, 1)
+            : const Color.fromRGBO(229, 229, 234, 1);
       case '0':
       case '1':
       case '2':
@@ -1627,8 +1627,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case '00':
       case '.':
         return isDarkMode
-            ? Color.fromRGBO(16, 16, 16, 1)
-            : Color.fromRGBO(250, 250, 250, 1);
+            ? const Color.fromRGBO(16, 16, 16, 1)
+            : const Color.fromRGBO(250, 250, 250, 1);
       case 'hist':
       case 'unit':
       case 'Settings':
@@ -1639,8 +1639,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
             .barBackgroundColor; // Use bar background for these
       default:
         return isDarkMode
-            ? Color.fromRGBO(30, 30, 30, 1)
-            : Color.fromRGBO(229, 229, 234, 1); // Default button color
+            ? const Color.fromRGBO(30, 30, 30, 1)
+            : const Color.fromRGBO(229, 229, 234, 1); // Default button color
     }
   }
 
@@ -2126,7 +2126,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
             height: MediaQuery.of(modalContext).size.height * 0.65,
             decoration: BoxDecoration(
               color: currentTheme.scaffoldBackgroundColor,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
@@ -2261,19 +2261,19 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   ),
                 ),
                 // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
+                const Padding(
+                  padding: EdgeInsets.symmetric(
                       horizontal: 20.0, vertical: 10.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // Center handle only, no close button
-                      const SizedBox.shrink(),
+                      SizedBox.shrink(),
                     ],
                   ),
                 ),
                 // Full Tools Page with tabs
-                Expanded(
+                const Expanded(
                   child: ToolsPage(
                       isModal:
                           true), // Use the full ToolsPage with tabs in modal mode

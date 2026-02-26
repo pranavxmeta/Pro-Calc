@@ -164,7 +164,7 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>(
 );
 
 // Define custom CupertinoThemeData for light theme
-final lightTheme = CupertinoThemeData(
+const lightTheme = CupertinoThemeData(
   brightness: Brightness.light,
   primaryColor: CupertinoColors.activeBlue,
   // Use existing CupertinoColors for light theme
@@ -203,7 +203,7 @@ final lightTheme = CupertinoThemeData(
 );
 
 // Define custom CupertinoThemeData for dark theme
-final darkTheme = CupertinoThemeData(
+const darkTheme = CupertinoThemeData(
   brightness: Brightness.dark,
   primaryColor: CupertinoColors.systemIndigo, // Example dark primary color
   // Define dark theme colors

@@ -54,7 +54,7 @@ class SoundConverterPage extends StatelessWidget {
     return BaseConverterPage(
       title: 'Sound Converter',
       units: _units,
-      conversionRates: {}, // Not used due to logarithmic conversions
+      conversionRates: const {}, // Not used due to logarithmic conversions
       onConvert: _handleConversion,
     );
   }

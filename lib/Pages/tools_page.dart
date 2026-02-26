@@ -42,7 +42,7 @@ class _ToolsPageState extends State<ToolsPage> {
                 color: widget.isModal
                     ? Colors.transparent
                     : CupertinoColors.systemBackground,
-                border: Border(
+                border: const Border(
                   bottom: BorderSide(
                     color: CupertinoColors.systemGrey4,
                     width: 0.5,

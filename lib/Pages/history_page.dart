@@ -16,8 +16,8 @@ class AppColors {
 
   // Icon and text colors
   static final darkGrey = Colors.grey[400];
-  static final lightGrey = Colors.grey;
-  static final darkGreyText = Colors.black12;
+  static const lightGrey = Colors.grey;
+  static const darkGreyText = Colors.black12;
   static final lightTimestampColor =
       Colors.grey[600]; // More visible timestamp color for light mode
 
@@ -64,8 +64,8 @@ class _HistoryPageState extends State<HistoryPage> {
           child: Container(
             decoration: BoxDecoration(
               color: CupertinoTheme.of(context).brightness == Brightness.dark
-                  ? Color.fromRGBO(50, 50, 50, 0.9) // Darker snackbar
-                  : Color.fromRGBO(230, 230, 230, 0.9), // Lighter snackbar
+                  ? const Color.fromRGBO(50, 50, 50, 0.9) // Darker snackbar
+                  : const Color.fromRGBO(230, 230, 230, 0.9), // Lighter snackbar
               borderRadius: BorderRadius.circular(10),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -98,8 +98,8 @@ class _HistoryPageState extends State<HistoryPage> {
       children: [
         Material(
           color: CupertinoTheme.of(context).brightness == Brightness.dark
-              ? Color.fromRGBO(30, 30, 30, 1) // Dark background
-              : Color.fromRGBO(240, 240, 240, 1), // Light background
+              ? const Color.fromRGBO(30, 30, 30, 1) // Dark background
+              : const Color.fromRGBO(240, 240, 240, 1), // Light background
           child: widget.history.isEmpty
               ? Center(
                   child: Column(
@@ -113,7 +113,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ? AppColors.darkGrey
                             : AppColors.lightGrey,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'No calculations yet',
                         style: TextStyle(

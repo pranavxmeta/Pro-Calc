@@ -59,7 +59,7 @@ class FuelConverterPage extends StatelessWidget {
     return BaseConverterPage(
       title: 'Fuel Converter',
       units: _units,
-      conversionRates: {}, // Not used due to non-linear conversions
+      conversionRates: const {}, // Not used due to non-linear conversions
       onConvert: _handleConversion,
     );
   }

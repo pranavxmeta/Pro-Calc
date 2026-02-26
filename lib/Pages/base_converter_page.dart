@@ -580,7 +580,7 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             SizedBox(
               child: Text(widget.title,
                   style: TextStyle(
