@@ -51,7 +51,7 @@ class _BaseShapePageState extends State<BaseShapePage>
     ['1', '2', '3'],
     ['00', '0', '.']
   ];
-  final List<String> _sideButtons = ['AC', 'del'];
+  // final List<String> _sideButtons = ['AC', 'del'];
 
   // Swipe animation controllers
   final Map<String, AnimationController> _swipeControllers = {};
@@ -1187,7 +1187,7 @@ class _BaseShapePageState extends State<BaseShapePage>
                                     fontFamily: 'Reddit Sans',
                                     color: currentTheme
                                         .textTheme.textStyle.color
-                                        ?.withOpacity(0.7),
+                                        ?.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ],
@@ -1209,7 +1209,7 @@ class _BaseShapePageState extends State<BaseShapePage>
                                         ? currentTheme.textTheme.textStyle.color
                                         : currentTheme
                                             .textTheme.textStyle.color!
-                                            .withOpacity(0.5)),
+                                            .withValues(alpha: 0.5)),
                               ),
                               textAlign: TextAlign.left,
                             ),
@@ -1285,8 +1285,8 @@ class _BaseShapePageState extends State<BaseShapePage>
     switch (text) {
       case 'AC':
         return isDarkMode
-            ? CupertinoColors.systemRed.withOpacity(0.6)
-            : CupertinoColors.systemRed.withOpacity(0.3);
+            ? CupertinoColors.systemRed.withValues(alpha: 0.6)
+            : CupertinoColors.systemRed.withValues(alpha: 0.3);
       case 'del':
         return isDarkMode
             ? const Color.fromRGBO(45, 45, 45, 1)
@@ -1332,7 +1332,7 @@ class _BaseShapePageState extends State<BaseShapePage>
 
   Widget _buildKeypadButton(BuildContext context, String text, double btnSize,
       {double? height, VoidCallback? onPressedOverride}) {
-    final currentTheme = CupertinoTheme.of(context);
+    // final currentTheme = CupertinoTheme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
 
     Color buttonColor = _getButtonBackgroundColor(context, text);
@@ -1357,7 +1357,7 @@ class _BaseShapePageState extends State<BaseShapePage>
       );
     }
 
-    const bool applyShadow = true;
+    // const bool applyShadow = true;
 
     VoidCallback actualOnPressed;
     if (onPressedOverride != null) {
@@ -1377,16 +1377,16 @@ class _BaseShapePageState extends State<BaseShapePage>
       decoration: BoxDecoration(
         color: buttonColor,
         borderRadius: BorderRadius.circular(btnSize * 0.25),
-        boxShadow: applyShadow
-            ? [
-                BoxShadow(
-                  color: CupertinoColors.systemGrey.withOpacity(0.15),
-                  spreadRadius: 0.5,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1.5),
-                ),
-              ]
-            : null,
+        // boxShadow: applyShadow
+        //     ? [
+        //         BoxShadow(
+        //           color: CupertinoColors.systemGrey.withOpacity(0.15),
+        //           spreadRadius: 0.5,
+        //           blurRadius: 2,
+        //           offset: const Offset(0, 1.5),
+        //         ),
+        //       ]
+        //     : null,
       ),
       child: CupertinoButton(
         padding: EdgeInsets.zero,

@@ -1587,29 +1587,29 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case 'DEG':
       case 'RAD':
         return isDeg
-            ? CupertinoColors.systemGreen.withOpacity(0.3)
-            : CupertinoColors.systemOrange.withOpacity(0.3);
+            ? CupertinoColors.systemGreen.withValues(alpha: 0.3)
+            : CupertinoColors.systemOrange.withValues(alpha: 0.3);
       case 'X':
         return isDarkMode
-            ? CupertinoColors.systemPurple.withOpacity(0.6)
-            : CupertinoColors.systemPurple.withOpacity(0.3);
+            ? CupertinoColors.systemPurple.withValues(alpha: 0.6)
+            : CupertinoColors.systemPurple.withValues(alpha: 0.3);
 
       case 'Y':
         return isDarkMode
-            ? CupertinoColors.systemTeal.withOpacity(0.6)
-            : CupertinoColors.systemTeal.withOpacity(0.3);
+            ? CupertinoColors.systemTeal.withValues(alpha: 0.6)
+            : CupertinoColors.systemTeal.withValues(alpha: 0.3);
 
       case 'shft':
         return isShift
-            ? CupertinoColors.systemIndigo.withOpacity(0.4)
-            : CupertinoColors.systemIndigo.withOpacity(0.3);
+            ? CupertinoColors.systemIndigo.withValues(alpha: 0.4)
+            : CupertinoColors.systemIndigo.withValues(alpha: 0.3);
       case 'AC':
         return isDarkMode
-            ? CupertinoColors.systemRed.withOpacity(0.6)
-            : CupertinoColors.systemRed.withOpacity(0.3);
+            ? CupertinoColors.systemRed.withValues(alpha: 0.6)
+            : CupertinoColors.systemRed.withValues(alpha: 0.3);
 
       case '=':
-        return CupertinoColors.activeBlue.withOpacity(0.5);
+        return CupertinoColors.activeBlue.withValues(alpha: 0.5);
       case 'del':
         return isDarkMode
             ? const Color.fromRGBO(30, 30, 30, 1)
@@ -1645,7 +1645,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
   }
 
   Color getButtonForegroundColor(BuildContext context, String text) {
-    final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
+    // final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
     switch (text) {
       case 'del':
         return CupertinoColors.systemRed;
@@ -1802,7 +1802,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
         boxShadow: applyShadow
             ? [
                 BoxShadow(
-                  color: CupertinoColors.systemGrey.withOpacity(0.1),
+                  color: CupertinoColors.systemGrey.withValues(alpha: 0.1),
                   spreadRadius: 0.5,
                   blurRadius: 2,
                   offset: const Offset(0, 1),
@@ -1929,7 +1929,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                       ),
                                       color: currentTheme
                                           .textTheme.textStyle.color!
-                                          .withOpacity(0.7),
+                                          .withValues(alpha: 0.7),
                                       // fontFamily: '42dots Sans',
                                     ),
                                     maxLines: 1,
@@ -2138,7 +2138,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   width: 35,
                   margin: const EdgeInsets.symmetric(vertical: 10.0),
                   decoration: BoxDecoration(
-                    color: currentTheme.primaryColor.withOpacity(0.3),
+                    color: currentTheme.primaryColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
@@ -2256,14 +2256,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   margin: const EdgeInsets.symmetric(vertical: 10.0),
                   decoration: BoxDecoration(
                     color: currentTheme.primaryColor
-                        .withOpacity(0.3), // Use a theme color
+                        .withValues(alpha: 0.3), // Use a theme color
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
                 // Header
                 const Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 20.0, vertical: 10.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

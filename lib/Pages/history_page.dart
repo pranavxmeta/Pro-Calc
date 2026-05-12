@@ -24,12 +24,12 @@ class AppColors {
   // Button colors
   static final darkRedButton = Colors.red[900];
   static final lightRedButton = Colors.red[100];
-  static final darkIconColor = Colors.white.withOpacity(0.87);
+  static final darkIconColor = Colors.white.withValues(alpha: 0.87);
   static const lightIconColor = Colors.black87;
 
   // Shadow colors
-  static final darkShadow = Colors.black.withOpacity(0.3);
-  static final lightShadow = Colors.grey.withOpacity(0.2);
+  static final darkShadow = Colors.black.withValues(alpha: 0.3);
+  static final lightShadow = Colors.grey.withValues(alpha: 0.2);
 
   // History card colors
   static const darkCardBackground = Color.fromRGBO(40, 40, 40, 1);
@@ -65,7 +65,8 @@ class _HistoryPageState extends State<HistoryPage> {
             decoration: BoxDecoration(
               color: CupertinoTheme.of(context).brightness == Brightness.dark
                   ? const Color.fromRGBO(50, 50, 50, 0.9) // Darker snackbar
-                  : const Color.fromRGBO(230, 230, 230, 0.9), // Lighter snackbar
+                  : const Color.fromRGBO(
+                      230, 230, 230, 0.9), // Lighter snackbar
               borderRadius: BorderRadius.circular(10),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -193,7 +194,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                                   .textTheme
                                                   .textStyle
                                                   .color!
-                                                  .withOpacity(0.87),
+                                                  .withValues(alpha: 0.87),
                                             ),
                                             overflow: TextOverflow
                                                 .ellipsis, // Show '...' if too long

@@ -20,9 +20,12 @@ class _DateCalcPageState extends State<DateCalcPage> {
 
   // For Add/Subtract Mode
   DateTime _initialDate = DateTime.now();
-  final TextEditingController _yearsController = TextEditingController(text: '0');
-  final TextEditingController _monthsController = TextEditingController(text: '0');
-  final TextEditingController _daysController = TextEditingController(text: '0');
+  final TextEditingController _yearsController =
+      TextEditingController(text: '0');
+  final TextEditingController _monthsController =
+      TextEditingController(text: '0');
+  final TextEditingController _daysController =
+      TextEditingController(text: '0');
   bool _isSubtract = false;
 
   String _resultText = '';
@@ -50,7 +53,9 @@ class _DateCalcPageState extends State<DateCalcPage> {
       context: context,
       builder: (_) => Container(
         height: 250,
-        color: CupertinoTheme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
+        color: CupertinoTheme.of(context)
+            .scaffoldBackgroundColor
+            .withValues(alpha: 0.95),
         child: Column(
           children: [
             SizedBox(
@@ -180,8 +185,12 @@ class _DateCalcPageState extends State<DateCalcPage> {
             CupertinoSlidingSegmentedControl<bool>(
               groupValue: _isSubtract,
               children: const {
-                false: Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Text('Add')),
-                true: Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Text('Subtract')),
+                false: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text('Add')),
+                true: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text('Subtract')),
               },
               onValueChanged: (bool? newValue) {
                 if (newValue != null) {
@@ -202,7 +211,10 @@ class _DateCalcPageState extends State<DateCalcPage> {
     );
   }
 
-  Widget _buildDateRow({required String label, required DateTime date, required VoidCallback onTap}) {
+  Widget _buildDateRow(
+      {required String label,
+      required DateTime date,
+      required VoidCallback onTap}) {
     return CupertinoListTile(
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
       trailing: CupertinoButton(
@@ -218,12 +230,16 @@ class _DateCalcPageState extends State<DateCalcPage> {
     );
   }
 
-   Widget _buildDurationInputRow(String label, TextEditingController controller) {
+  Widget _buildDurationInputRow(
+      String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          SizedBox(width: 80, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
+          SizedBox(
+              width: 80,
+              child: Text(label,
+                  style: const TextStyle(fontWeight: FontWeight.w500))),
           const SizedBox(width: 10),
           Expanded(
             child: CupertinoTextField(
@@ -232,10 +248,10 @@ class _DateCalcPageState extends State<DateCalcPage> {
               textAlign: TextAlign.center,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: CupertinoTheme.of(context).barBackgroundColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: CupertinoColors.systemGrey4, width: 0.5)
-              ),
+                  color: CupertinoTheme.of(context).barBackgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: CupertinoColors.systemGrey4, width: 0.5)),
               onChanged: (_) => _calculateResult(),
             ),
           ),
@@ -259,9 +275,11 @@ class _DateCalcPageState extends State<DateCalcPage> {
               CupertinoSegmentedControl<DateCalcMode>(
                 children: const {
                   DateCalcMode.difference: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8), child: Text('Difference')),
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Difference')),
                   DateCalcMode.addSubtract: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8), child: Text('Add/Subtract')),
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Add/Subtract')),
                 },
                 onValueChanged: (DateCalcMode? newValue) {
                   if (newValue != null) {
@@ -282,9 +300,10 @@ class _DateCalcPageState extends State<DateCalcPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: CupertinoTheme.of(context).brightness == Brightness.dark
-                      ? CupertinoColors.darkBackgroundGray
-                      : CupertinoColors.systemGrey6,
+                  color:
+                      CupertinoTheme.of(context).brightness == Brightness.dark
+                          ? CupertinoColors.darkBackgroundGray
+                          : CupertinoColors.systemGrey6,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

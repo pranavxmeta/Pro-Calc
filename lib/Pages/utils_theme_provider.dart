@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -170,7 +170,7 @@ const lightTheme = CupertinoThemeData(
   // Use existing CupertinoColors for light theme
   barBackgroundColor: Color.fromRGBO(242, 242, 242, 0),
   scaffoldBackgroundColor: Color.fromRGBO(242, 242, 242, 1),
-  textTheme: const CupertinoTextThemeData(
+  textTheme: CupertinoTextThemeData(
     textStyle: TextStyle(
       fontFamily: 'Inter',
       color: CupertinoColors.black, // Dark text for light theme
@@ -210,7 +210,7 @@ const darkTheme = CupertinoThemeData(
   barBackgroundColor: Color.fromRGBO(10, 10, 10, 0),
 
   scaffoldBackgroundColor: Color.fromRGBO(10, 10, 10, 1),
-  textTheme: const CupertinoTextThemeData(
+  textTheme: CupertinoTextThemeData(
     textStyle: TextStyle(
       fontFamily: 'Inter',
       color: CupertinoColors.white, // Light text for dark theme

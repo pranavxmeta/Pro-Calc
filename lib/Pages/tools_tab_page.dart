@@ -81,7 +81,7 @@ class ToolsTabGridContent extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: CupertinoTheme.of(context).brightness == Brightness.dark
-                  ? CupertinoColors.darkBackgroundGray.withOpacity(0.5)
+                  ? CupertinoColors.darkBackgroundGray.withValues(alpha: 0.5)
                   : CupertinoColors.systemGrey6,
               borderRadius: BorderRadius.circular(20),
             ),

@@ -116,7 +116,7 @@ class _FuelCostCalcPageState extends State<FuelCostCalcPage> {
               unitLabel,
               style: TextStyle(
                   color: currentTheme.textTheme.tabLabelTextStyle.color
-                      ?.withOpacity(0.7)),
+                      ?.withValues(alpha: 0.7)),
               textAlign: TextAlign.left,
             ),
           ),
@@ -149,7 +149,7 @@ class _FuelCostCalcPageState extends State<FuelCostCalcPage> {
                   style: TextStyle(
                       fontSize: 14,
                       color: currentTheme.textTheme.tabLabelTextStyle.color
-                          ?.withOpacity(0.7)),
+                          ?.withValues(alpha: 0.7)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -163,7 +163,6 @@ class _FuelCostCalcPageState extends State<FuelCostCalcPage> {
               _buildInputRow('Fuel Price:', _priceController, _priceUnitLabel,
                   placeholder: 'e.g., 1.50'),
 
-              // TODO: Add Unit Pickers here if you want to support multiple units
               // Example: _buildUnitSelector("Distance Unit", _distanceUnit, (newUnit) => setState(() => _distanceUnit = newUnit));
 
               const SizedBox(height: 24),
@@ -183,7 +182,7 @@ class _FuelCostCalcPageState extends State<FuelCostCalcPage> {
                       style: TextStyle(
                         fontSize: 16,
                         color: currentTheme.textTheme.textStyle.color
-                            ?.withOpacity(0.8),
+                            ?.withValues(alpha: 0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),

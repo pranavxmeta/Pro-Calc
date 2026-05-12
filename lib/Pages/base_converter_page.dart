@@ -153,7 +153,7 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                   width: 35,
                   margin: const EdgeInsets.symmetric(vertical: 10.0),
                   decoration: BoxDecoration(
-                    color: currentTheme.primaryColor.withOpacity(0.3),
+                    color: currentTheme.primaryColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),

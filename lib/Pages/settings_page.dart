@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -39,7 +38,7 @@ class SettingsModalContent extends ConsumerWidget {
             width: 35,
             margin: const EdgeInsets.symmetric(vertical: 10.0),
             decoration: BoxDecoration(
-              color: currentTheme.primaryColor.withOpacity(0.3),
+              color: currentTheme.primaryColor.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
@@ -185,7 +184,7 @@ class SettingsModalContent extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        color: currentTheme.primaryColor.withOpacity(0.2),
+                        color: currentTheme.primaryColor.withValues(alpha: 0.2),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -264,7 +263,8 @@ class SettingsModalContent extends ConsumerWidget {
               icon,
               color: isSelected
                   ? CupertinoColors.white
-                  : currentTheme.textTheme.textStyle.color!.withOpacity(0.7),
+                  : currentTheme.textTheme.textStyle.color!
+                      .withValues(alpha: 0.7),
               size: 16,
             ),
             const SizedBox(width: 4),
@@ -278,7 +278,7 @@ class SettingsModalContent extends ConsumerWidget {
                   color: isSelected
                       ? CupertinoColors.white
                       : currentTheme.textTheme.textStyle.color!
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -290,7 +290,7 @@ class SettingsModalContent extends ConsumerWidget {
 
   Widget _buildSocialButton({
     required BuildContext context,
-    required IconData icon,
+    required FaIconData icon,
     required String url,
   }) {
     final currentTheme = CupertinoTheme.of(context);
@@ -311,7 +311,7 @@ class SettingsModalContent extends ConsumerWidget {
           color: currentTheme.barBackgroundColor,
           shape: BoxShape.circle,
         ),
-        child: Icon(
+        child: FaIcon(
           icon,
           color: currentTheme.primaryColor,
           size: 24,
