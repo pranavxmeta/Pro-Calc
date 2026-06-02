@@ -855,8 +855,8 @@ class _BaseShapePageState extends State<BaseShapePage>
               style: TextStyle(
                 fontSize: 14,
                 fontFamily: 'Reddit Sans',
-                color: CupertinoColors.activeBlue.withOpacity(
-                  isActive
+                color: CupertinoColors.activeBlue.withValues(
+                  alpha: isActive
                       ? 1.0
                       : (index == currentIndex - 2 || index == currentIndex + 2
                           ? 0.4

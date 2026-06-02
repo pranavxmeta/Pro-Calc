@@ -77,7 +77,7 @@ class SettingsModalContent extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Spacer(),
+                          // const Spacer(),
                           Expanded(
                             child: _buildThemeButton(
                               context: context,
