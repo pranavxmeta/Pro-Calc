@@ -1,5 +1,4 @@
-import 'dart:math';
-import 'package:eval_ex/expression.dart';
+import 'package:exath_engine/exath_engine.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -189,6 +188,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
     _rawToFormattedPositionMap = {};
 
     _loadHistory();
+
+    // Warm up the native/wasm exath engine. No-op on native; awaits the wasm
+    // module on web so the first keystroke doesn't race initialization.
+    ensureInitialized();
   }
 
   @override
@@ -327,173 +330,52 @@ class _CalcPageState extends ConsumerState<CalcPage>
         return;
       }
 
-      // IMPORTANT: Remove commas from the expression before evaluation
-      String expressionWithoutCommas = expression.replaceAll(',', '');
-
-      // Handle inverse trig functions in degree mode
-      String preparedExpression = expressionWithoutCommas;
-
+      // Percentage handling stays app-side (context-dependent: "200+10%" etc.)
       if (expression.contains('%')) {
         try {
-          // Replace percentages with their decimal equivalents based on context
           expression = _handlePercentageCalculations(expression);
-          preparedExpression = expression.replaceAll(',', '');
           debugPrint("Expression after percentage handling: '$expression'");
         } catch (e) {
           debugPrint("Error handling percentages: $e");
-          // Continue with original expression if percentage handling fails
         }
       }
 
-      if (isDeg && isShift && expression.contains('⁻¹')) {
-        // Find all inverse trig functions in the expression
-        RegExp inverseTrigPattern =
-            RegExp(r'(sin|cos|tan)⁻¹\s*\(\s*([^()]+)\s*\)');
-        Iterable<RegExpMatch> matches =
-            inverseTrigPattern.allMatches(expression);
-
-        // Process each match
-        for (RegExpMatch match in matches) {
-          String fullMatch = match.group(0)!;
-          String funcType = match.group(1)!;
-          String argExpr = match.group(2)!;
-
-          debugPrint(
-              "Found inverse trig function: $fullMatch, type: $funcType, arg: $argExpr");
-
-          // Prepare the argument expression
-          String preparedArgExpr = argExpr
-              .replaceAll('×', '*')
-              .replaceAll('÷', '/')
-              .replaceAll('π', '3.141592653589793')
-              .replaceAllMapped(
-                  RegExp(r'(?<![\d.])e'), (m) => '2.718281828459045');
-
-          // Evaluate the argument
-          try {
-            Expression argExpression = Expression(preparedArgExpr);
-            var argResult = argExpression.eval();
-
-            if (argResult != null) {
-              double argValue = argResult.toDouble();
-              double resultInRadians;
-
-              // Apply the appropriate inverse trig function
-              switch (funcType) {
-                case "sin":
-                  resultInRadians = asin(argValue);
-                  break;
-                case "cos":
-                  resultInRadians = acos(argValue);
-                  break;
-                case "tan":
-                  resultInRadians = atan(argValue);
-                  break;
-                default:
-                  throw Exception("Unknown inverse trig function");
-              }
-
-              // Convert from radians to degrees
-              double resultInDegrees = resultInRadians * (180 / pi);
-              debugPrint(
-                  "Calculated $funcType⁻¹($argValue) = $resultInDegrees degrees");
-
-              // Replace the inverse trig function with its numeric result
-              preparedExpression = preparedExpression.replaceFirst(
-                  fullMatch, resultInDegrees.toString());
-
-              debugPrint("Expression after substitution: $preparedExpression");
-            }
-          } catch (e) {
-            debugPrint("Error evaluating inverse trig argument: $e");
-            // If we can't evaluate this part, continue with the original expression
-          }
-        }
-      }
-
-      // Now process the expression with substituted values
-      preparedExpression = preparedExpression
+      // Map Pro Calc's display glyphs to exath syntax. The engine natively
+      // handles angle mode (DEG/RAD), the constants π and e, trig & inverse
+      // trig, sqrt, ln, log (base-10), factorial (!) and powers (^), so the
+      // old SINR/COSR variants and manual degree conversion are gone.
+      final String preparedExpression = expression
+          .replaceAll(',', '')
           .replaceAll('×', '*')
           .replaceAll('÷', '/')
-          .replaceAll('π', '3.141592653589793')
-          .replaceAllMapped(
-              RegExp(r'(?<![\d.])e'), (match) => '2.718281828459045');
+          .replaceAll('√', 'sqrt')
+          .replaceAll('sin⁻¹', 'asin')
+          .replaceAll('cos⁻¹', 'acos')
+          .replaceAll('tan⁻¹', 'atan');
 
-      // Handle remaining trig functions
-      if (isShift) {
-        if (isDeg) {
-          preparedExpression = preparedExpression
-              .replaceAll('sin⁻¹(', 'ASIN(')
-              .replaceAll('cos⁻¹(', 'ACOS(')
-              .replaceAll('tan⁻¹(', 'ATAN(');
-        } else {
-          preparedExpression = preparedExpression
-              .replaceAll('sin⁻¹(', 'ASINR(')
-              .replaceAll('cos⁻¹(', 'ACOSR(')
-              .replaceAll('tan⁻¹(', 'ATANR(');
-        }
-      } else {
-        if (isDeg) {
-          preparedExpression = preparedExpression
-              .replaceAllMapped(RegExp(r'sin\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'SIN(${match.group(1)})')
-              .replaceAllMapped(RegExp(r'cos\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'COS(${match.group(1)})')
-              .replaceAllMapped(RegExp(r'tan\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'TAN(${match.group(1)})');
-        } else {
-          preparedExpression = preparedExpression
-              .replaceAllMapped(RegExp(r'sin\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'SINR(${match.group(1)})')
-              .replaceAllMapped(RegExp(r'cos\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'COSR(${match.group(1)})')
-              .replaceAllMapped(RegExp(r'tan\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-                  (match) => 'TANR(${match.group(1)})');
-        }
-      }
-
-      // Handle sqrt and logarithms
-      // Handle sqrt and logarithms
-      // Handle sqrt and logarithms
-      preparedExpression = preparedExpression
-          .replaceAllMapped(RegExp(r'√\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-              (match) => 'SQRT(${match.group(1)})')
-          .replaceAllMapped(
-              RegExp(r'ln\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-              (match) =>
-                  'LOG(${match.group(1)})') // Use LOG for natural logarithm
-          .replaceAllMapped(
-              RegExp(r'log\s*\(((?:[^()]*|\([^()]*\))*)\)'),
-              (match) =>
-                  'LOG10(${match.group(1)})'); // Use LOG10 for base-10 logarithm
-
-      debugPrint("Final expression for evaluation: '$preparedExpression'");
-
-      for (var entry in variables.entries) {
-        preparedExpression =
-            preparedExpression.replaceAll(entry.key, entry.value.toString());
-      }
-      debugPrint(
-          "Expression with variables substituted: '$preparedExpression'");
+      debugPrint("Final expression for exath: '$preparedExpression'");
 
       if (preparedExpression.isNotEmpty) {
-        Expression exp = Expression(preparedExpression);
-        var evalResult = exp.eval();
+        final ExathResult evalResult = _exathEval(
+          preparedExpression,
+          angle: isDeg ? AngleMode.deg : AngleMode.rad,
+          vars: variables,
+        );
 
-        if (evalResult != null) {
-          double result = evalResult.toDouble();
+        if (evalResult.isError) {
+          throw Exception(evalResult.error);
+        }
 
-          if (result.isFinite) {
-            if (mounted) {
-              setState(() {
-                answer = formatNumber(result);
-              });
-            }
-          } else {
-            throw Exception("Result is not finite: $result");
-          }
-        } else {
-          throw Exception("Evaluation returned null");
+        final String formatted = evalResult.isComplex
+            ? _formatComplex(evalResult.re, evalResult.im)
+            : (evalResult.re.isFinite
+                ? formatNumber(evalResult.re)
+                : throw Exception("Result is not finite: ${evalResult.re}"));
+
+        if (mounted) {
+          setState(() {
+            answer = formatted;
+          });
         }
       }
     } catch (e) {
@@ -664,11 +546,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
             // For + and -, calculate percentage of left operand
             if (operator == '+' || operator == '-') {
               try {
-                Expression exp = Expression(leftExpr);
-                var evalResult = exp.eval();
+                final evalResult = _exathEval(
+                  leftExpr,
+                  angle: isDeg ? AngleMode.deg : AngleMode.rad,
+                  vars: variables,
+                );
 
-                if (evalResult != null) {
-                  double leftValue = evalResult.toDouble();
+                if (!evalResult.isError) {
+                  double leftValue = evalResult.re;
                   double percentOfLeft = leftValue * percentValue;
 
                   if (operator == '+') {
@@ -689,11 +574,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
               try {
                 // Create the expression with the percentage value
                 String evalExpr = leftExpr + operator + percentValue.toString();
-                Expression exp = Expression(evalExpr);
-                var evalResult = exp.eval();
+                final evalResult = _exathEval(
+                  evalExpr,
+                  angle: isDeg ? AngleMode.deg : AngleMode.rad,
+                  vars: variables,
+                );
 
-                if (evalResult != null) {
-                  result = evalResult.toDouble();
+                if (!evalResult.isError) {
+                  result = evalResult.re;
                 } else {
                   // Fallback to simple percentage
                   result = percentValue;
@@ -1519,6 +1407,16 @@ class _CalcPageState extends ConsumerState<CalcPage>
     }
 
     return _numberFormat.format(number);
+  }
+
+  /// Formats a complex result from exath as `a + bi` (or `bi` when the real
+  /// part is ~0). exath evaluates over ℂ, so e.g. √(-4) now yields `2i`.
+  String _formatComplex(double re, double im) {
+    final String imPart = '${formatNumber(im.abs())}i';
+    if (re.abs() < 1e-12) {
+      return im < 0 ? '-$imPart' : imPart;
+    }
+    return '${formatNumber(re)} ${im < 0 ? '-' : '+'} $imPart';
   }
 
   String formatScientificForInput(String scientificNumber) {
@@ -2351,3 +2249,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
 
 // Call this after formatting in setState blocks
 } // End of _CalcPageState
+
+/// Evaluate [expr] through the exath_engine plugin, binding [vars] via a session
+/// (the plugin's top-level `evaluate` is stateless).
+ExathResult _exathEval(String expr,
+    {required AngleMode angle, Map<String, double> vars = const {}}) {
+  final s = ExathSession(angleMode: angle);
+  vars.forEach((name, value) => s.setVar(name, value));
+  final r = s.eval(expr);
+  s.dispose();
+  return r;
+}

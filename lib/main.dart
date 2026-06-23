@@ -5,6 +5,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:pro_calc/Pages/calc_page.dart';
 import 'package:pro_calc/Pages/utils_theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:exath_engine/exath_engine.dart';
 
 Future<void> initializeApp() async {
   try {
@@ -23,6 +24,7 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await initializeApp();
+    await ensureInitialized();
 
     runApp(const ProviderScope(
       child: ProCalc(),
