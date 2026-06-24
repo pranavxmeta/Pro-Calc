@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -26,9 +27,7 @@ void main() async {
     await initializeApp();
     await ensureInitialized();
 
-    runApp(const ProviderScope(
-      child: ProCalc(),
-    ));
+    runApp(const ProviderScope(child: ProCalc()));
   } catch (e) {
     debugPrint('Fatal error during app startup: $e');
     rethrow;
@@ -47,11 +46,6 @@ class ProCalc extends ConsumerWidget {
       final brightness = MediaQuery.platformBrightnessOf(context);
       effectiveThemeMode =
           brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light;
-      debugPrint(
-          'Following system theme, brightness=$brightness, effectiveThemeMode=$effectiveThemeMode');
-    } else {
-      debugPrint(
-          'Not following system theme, using themeMode=${themeState.themeMode}');
     }
 
     final theme =
@@ -65,12 +59,28 @@ class ProCalc extends ConsumerWidget {
           : Brightness.light,
     ));
 
+    final orientation = MediaQuery.of(context).orientation;
+
+    Widget homeContent;
+
+    if (kIsWeb && orientation == Orientation.landscape) {
+      homeContent = const CupertinoPageScaffold(
+        child: Center(
+          child: Text(
+            'The app is best viewed in portrait mode',
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+      );
+    } else {
+      homeContent = const CalcPage();
+    }
+
     return CupertinoApp(
-      // showPerformanceOverlay: true,
       theme: theme,
       debugShowCheckedModeBanner: false,
       title: 'Pro Calc',
-      home: const CalcPage(),
+      home: homeContent,
     );
   }
 }

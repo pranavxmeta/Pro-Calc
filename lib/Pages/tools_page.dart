@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import 'Export_Page_list/unit_page_list.dart';
@@ -149,6 +149,14 @@ class ToolsGridContent extends StatelessWidget {
     {'name': 'BMI', 'icon': FluentIcons.person_24_regular},
   ];
 
+  // List of distinct light colors
+  final List<Color> _lightColors = [
+    CupertinoColors.systemBlue,
+    CupertinoColors.systemGreen,
+    CupertinoColors.systemYellow,
+    CupertinoColors.systemRed,
+  ];
+
   void _navigateToConverter(BuildContext context, String name) {
     Widget? page;
     switch (name) {
@@ -223,6 +231,11 @@ class ToolsGridContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final Color backgroundColor = isDarkMode
+        ? const Color.fromARGB(255, 45, 45, 80)
+        : const Color.fromARGB(255, 98, 206, 84);
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -233,12 +246,14 @@ class ToolsGridContent extends StatelessWidget {
       ),
       itemCount: converterTools.length,
       itemBuilder: (context, index) {
+        final color = _lightColors[
+            index % _lightColors.length]; // Select a random light color
         return GestureDetector(
           onTap: () =>
               _navigateToConverter(context, converterTools[index]['name']),
           child: Container(
             decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey6,
+              color: backgroundColor,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -247,7 +262,7 @@ class ToolsGridContent extends StatelessWidget {
                 Icon(
                   converterTools[index]['icon'],
                   size: 32,
-                  color: CupertinoColors.activeBlue,
+                  color: color, // Use the selected light color
                 ),
                 const SizedBox(height: 8),
                 Text(
