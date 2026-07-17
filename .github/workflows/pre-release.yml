@@ -1,0 +1,152 @@
+name: Dev Branch APK Pre-release Build
+on:
+  # push:
+  #   branches:
+  #     - dev
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build (default: dev)'
+        required: false
+        default: 'dev'
+jobs:
+  build_and_prerelease:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Grant write access for creating releases
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'dev' }}
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: /opt/hostedtoolcache/flutter
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/.flutter-version') }}
+          restore-keys: ${{ runner.os }}-flutter-
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Android SDK build-tools
+        run: |
+          sdkmanager --install "build-tools;34.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_PATH
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release --verbose
+
+      - name: Check APK Output
+        run: |
+          echo "Listing files in build/app/outputs/apk/release:"
+          ls -la build/app/outputs/apk/release || echo "Directory empty or does not exist"
+          APK_PATH=$(find build/app/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK found!"
+            exit 1
+          fi
+          echo "APK found: $APK_PATH"
+          echo "apk_path=$APK_PATH" >> $GITHUB_ENV
+
+      - name: Sign Android release
+        run: |
+          # Path of the unsigned APK from the build step
+          UNSIGNED_APK_PATH="${{ env.apk_path }}"
+          # Define intermediate and final paths
+          UNSIGNED_ALIGNED_APK_PATH="build/app/outputs/apk/release/app-release-unsigned-aligned.apk"
+          SIGNED_APK_PATH="build/app/outputs/apk/release/app-release.apk" # Final output name
+
+          echo "Debug: Unsigned APK path before alignment: $UNSIGNED_APK_PATH"
+          ls -la $(dirname "$UNSIGNED_APK_PATH")
+
+          # Decode the base64-encoded keystore
+          echo "${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}" | base64 -d > keystore.jks
+          # Verify keystore
+          keytool -list -keystore keystore.jks -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" -v
+
+          # 1. Align the unsigned APK
+          echo "Aligning $UNSIGNED_APK_PATH to $UNSIGNED_ALIGNED_APK_PATH..."
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 \
+            "$UNSIGNED_APK_PATH" \
+            "$UNSIGNED_ALIGNED_APK_PATH"
+          
+          echo "Verifying alignment of $UNSIGNED_ALIGNED_APK_PATH..."
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -c -v 4 "$UNSIGNED_ALIGNED_APK_PATH"
+
+          # 2. Sign the aligned-unsigned APK (removed explicit --vX-signing-enabled true flags)
+          echo "Signing $UNSIGNED_ALIGNED_APK_PATH to $SIGNED_APK_PATH..."
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks keystore.jks \
+            --ks-pass pass:"${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --out "$SIGNED_APK_PATH" \
+            "$UNSIGNED_ALIGNED_APK_PATH"
+
+          # 3. Verify signatures of the final APK
+          echo "Verifying signatures of $SIGNED_APK_PATH with apksigner..."
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose "$SIGNED_APK_PATH"
+          
+          echo "Verifying signatures of $SIGNED_APK_PATH with jarsigner..."
+          jarsigner -verify -verbose -certs "$SIGNED_APK_PATH"
+
+          # Update apk_path to point to the final signed APK for subsequent steps
+          echo "Final signed APK path for release: $SIGNED_APK_PATH"
+          echo "apk_path=$SIGNED_APK_PATH" >> $GITHUB_ENV
+        env:
+          ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+
+      - name: Find Signed APK
+        id: find_signed_apk
+        run: |
+          # env.apk_path is now correctly set to the final signed APK path by the previous step
+          SIGNED_APK="${{ env.apk_path }}"
+          if [ ! -f "$SIGNED_APK" ]; then
+            echo "Signed APK ($SIGNED_APK) not found!"
+            exit 1
+          fi
+          echo "Signed APK found: $SIGNED_APK"
+          echo "signed_apk_path=$SIGNED_APK" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Pre-release and Upload APK
+        if: ${{ steps.find_signed_apk.outputs.signed_apk_path != '' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: dev-build-${{ github.run_number }}-${{ github.run_id }}
+          name: Dev Build #${{ github.run_number }}
+          body: |
+            Pre-release build from ${{ github.event.inputs.branch || 'dev' }} branch.
+            Triggered manually or on push (run #${{ github.run_number }}).
+            Commit: ${{ github.sha }}
+          prerelease: true
+          draft: false
+          files: ${{ steps.find_signed_apk.outputs.signed_apk_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
