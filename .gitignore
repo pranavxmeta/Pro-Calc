@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# IDEs and editors
+.idx/
+.vscode/
+
+# Local logs
+debug_log.txt
