@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart' hide ThemeMode;
 import 'tools_page.dart';
+
 import 'history_page.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'settings_page.dart';
@@ -126,10 +127,16 @@ class _CalcPageState extends ConsumerState<CalcPage>
           ];
 
     // Define operator order
-    final operators =
-        changeOperatorOrder ? ['+', '-', '×', '÷'] : ['÷', '×', '-', '+'];
+    final operators = changeOperatorOrder
+        ? ['+', '-', '×', '÷']
+        : ['÷', '×', '-', '+'];
 
     return [
+      'Copy',
+      'Paste',
+      'empty',
+      'empty',
+      'empty',
       'shft',
       'X',
       'Y',
@@ -215,18 +222,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final double initialAnswerSize = baseAnswerSize * 0.8; // Smaller initial
     final double finalAnswerSize = baseAnswerSize * 1.2; // Larger final
 
-    _inputTextSizeAnimation = Tween<double>(
-      begin: initialInputSize,
-      end: finalInputSize,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _answerTextSizeAnimation = Tween<double>(
-      begin: initialAnswerSize,
-      end: finalAnswerSize,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _inputTextSizeAnimation =
+        Tween<double>(begin: initialInputSize, end: finalInputSize).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+    _answerTextSizeAnimation =
+        Tween<double>(begin: initialAnswerSize, end: finalAnswerSize).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
   }
 
   @override
@@ -325,7 +328,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
               endsWithOpenParen ||
               unbalancedParens)) {
         debugPrint(
-            "Skipping evaluation: hasOperator=$hasOperator, hasFunction=$hasFunction, endsWithOp=$endsWithOp, unbalancedParens=$unbalancedParens");
+          "Skipping evaluation: hasOperator=$hasOperator, hasFunction=$hasFunction, endsWithOp=$endsWithOp, unbalancedParens=$unbalancedParens",
+        );
         if (mounted) setState(() => answer = '');
         return;
       }
@@ -369,8 +373,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
         final String formatted = evalResult.isComplex
             ? _formatComplex(evalResult.re, evalResult.im)
             : (evalResult.re.isFinite
-                ? formatNumber(evalResult.re)
-                : throw Exception("Result is not finite: ${evalResult.re}"));
+                  ? formatNumber(evalResult.re)
+                  : throw Exception("Result is not finite: ${evalResult.re}"));
 
         if (mounted) {
           setState(() {
@@ -434,8 +438,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
           final currentText = _rawExpression;
           final currentSelection = _inputController.selection;
           final cursorPos = currentSelection.baseOffset >= 0
-              ? currentSelection.baseOffset
-                  .clamp(0, _inputController.text.length)
+              ? currentSelection.baseOffset.clamp(
+                  0,
+                  _inputController.text.length,
+                )
               : _inputController.text.length;
 
           // Convert from formatted position to raw position
@@ -448,8 +454,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
             String textAfterCursor = currentText.substring(rawCursorPos);
 
             // Remove one character before cursor
-            String newTextBeforeCursor =
-                textBeforeCursor.substring(0, textBeforeCursor.length - 1);
+            String newTextBeforeCursor = textBeforeCursor.substring(
+              0,
+              textBeforeCursor.length - 1,
+            );
             String newText = newTextBeforeCursor + textAfterCursor;
 
             int newRawCursorPos = rawCursorPos - 1;
@@ -480,7 +488,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case '%':
         String currentText = _rawExpression;
         debugPrint(
-            "Percentage button pressed. Current expression: '$currentText'");
+          "Percentage button pressed. Current expression: '$currentText'",
+        );
 
         // If expression is empty, do nothing
         if (currentText.isEmpty) {
@@ -526,7 +535,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
               .replaceAll('÷', '/')
               .replaceAll('π', '3.141592653589793')
               .replaceAllMapped(
-                  RegExp(r'(?<![\d.])e'), (m) => '2.718281828459045');
+                RegExp(r'(?<![\d.])e'),
+                (m) => '2.718281828459045',
+              );
 
           // Check if we have a binary operation
           RegExp binaryOpPattern = RegExp(r'(.+)([\+\-\*\/])([0-9.]+)$');
@@ -661,8 +672,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
             setState(() {
               _rawExpression = buttonText;
               _inputController.text = buttonText;
-              _inputController.selection =
-                  const TextSelection.collapsed(offset: 1);
+              _inputController.selection = const TextSelection.collapsed(
+                offset: 1,
+              );
               _lastActionWasEval = false;
               _animationController.reset();
               answer = '';
@@ -687,8 +699,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
             setState(() {
               _rawExpression = answer.replaceAll(',', '') + buttonText;
               _inputController.text = formatExpression(_rawExpression);
-              _inputController.selection =
-                  TextSelection.collapsed(offset: _inputController.text.length);
+              _inputController.selection = TextSelection.collapsed(
+                offset: _inputController.text.length,
+              );
               _lastActionWasEval = false;
               _animationController.reset();
               answer = '';
@@ -777,7 +790,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
             // Use the answer as the input for square root
             buffer.write('√(');
             buffer.write(
-                answer.replaceAll(',', '')); // Remove commas from the answer
+              answer.replaceAll(',', ''),
+            ); // Remove commas from the answer
             buffer.write(')');
           } else {
             // Just start a new square root expression
@@ -817,7 +831,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
             String formattedText = formatExpression(_rawExpression);
             int formattedCursorPos =
                 _rawToFormattedPositionMap[_rawCursorPosition] ??
-                    formattedText.length;
+                formattedText.length;
 
             _inputController.value = TextEditingValue(
               text: formattedText,
@@ -860,8 +874,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
           setState(() {
             _rawExpression = buffer.toString();
             _inputController.text = formatExpression(_rawExpression);
-            _inputController.selection =
-                TextSelection.collapsed(offset: _inputController.text.length);
+            _inputController.selection = TextSelection.collapsed(
+              offset: _inputController.text.length,
+            );
             debugPrint("Updated log expression: '$_rawExpression'");
             evaluateExpression();
           });
@@ -890,8 +905,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
           setState(() {
             _rawExpression = buffer.toString();
             _inputController.text = formatExpression(_rawExpression);
-            _inputController.selection =
-                TextSelection.collapsed(offset: _inputController.text.length);
+            _inputController.selection = TextSelection.collapsed(
+              offset: _inputController.text.length,
+            );
             debugPrint("Updated trig expression: '$_rawExpression'");
             evaluateExpression();
           });
@@ -928,13 +944,11 @@ class _CalcPageState extends ConsumerState<CalcPage>
           String formattedText = formatExpression(_rawExpression);
           int formattedCursorPos =
               _rawToFormattedPositionMap[_rawCursorPosition] ??
-                  formattedText.length;
+              formattedText.length;
 
           _inputController.value = TextEditingValue(
             text: formattedText,
-            selection: TextSelection.collapsed(
-              offset: formattedCursorPos,
-            ),
+            selection: TextSelection.collapsed(offset: formattedCursorPos),
           );
           _lastActionWasEval = false;
           _animationController.reset();
@@ -988,13 +1002,11 @@ class _CalcPageState extends ConsumerState<CalcPage>
         String formattedText = formatExpression(_rawExpression);
         int formattedCursorPos =
             _rawToFormattedPositionMap[_rawCursorPosition] ??
-                formattedText.length;
+            formattedText.length;
 
         _inputController.value = TextEditingValue(
           text: formattedText,
-          selection: TextSelection.collapsed(
-            offset: formattedCursorPos,
-          ),
+          selection: TextSelection.collapsed(offset: formattedCursorPos),
         );
         _lastActionWasEval = false;
         evaluateExpression();
@@ -1243,7 +1255,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
           String formattedText = formatExpression(_rawExpression);
           int formattedCursorPos =
               _rawToFormattedPositionMap[_rawCursorPosition] ??
-                  formattedText.length;
+              formattedText.length;
 
           _inputController.value = TextEditingValue(
             text: formattedText,
@@ -1301,7 +1313,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
       }
 
       // Create new expression
-      String newExpression = currentText.substring(0, rawCursorPos) +
+      String newExpression =
+          currentText.substring(0, rawCursorPos) +
           textToInsert +
           currentText.substring(rawCursorPos);
 
@@ -1315,13 +1328,11 @@ class _CalcPageState extends ConsumerState<CalcPage>
         String formattedText = formatExpression(newExpression);
         int formattedCursorPos =
             _rawToFormattedPositionMap[_rawCursorPosition] ??
-                formattedText.length;
+            formattedText.length;
 
         _inputController.value = TextEditingValue(
           text: formattedText,
-          selection: TextSelection.collapsed(
-            offset: formattedCursorPos,
-          ),
+          selection: TextSelection.collapsed(offset: formattedCursorPos),
         );
 
         _validatePositionMaps();
@@ -1350,7 +1361,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
 
       // Allow digits, operators, parentheses, decimal points, and specific functions/constants
       final validChars = RegExp(
-          r'^[0-9,\.\+\-*/×÷%^()\s]*(sin|cos|tan|log|ln|sqrt|π|e|X|Y)?$');
+        r'^[0-9,\.\+\-*/×÷%^()\s]*(sin|cos|tan|log|ln|sqrt|π|e|X|Y)?$',
+      );
       if (!validChars.hasMatch(pastedText)) {
         showOverlayMessage('Invalid characters in clipboard');
         return false;
@@ -1360,7 +1372,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
       final invalidSequences = [
         RegExp(r'[+*\/×÷%^]{2,}'), // Multiple operators
         RegExp(r'[-]{3,}'), // More than two minus signs
-        RegExp(r'[\.]{2,}') // Multiple decimal points
+        RegExp(r'[\.]{2,}'), // Multiple decimal points
       ];
 
       for (var pattern in invalidSequences) {
@@ -1479,23 +1491,91 @@ class _CalcPageState extends ConsumerState<CalcPage>
   //   'Paste': CupertinoColors.systemGroupedBackground,
   // };
 
-  Color getButtonColor(BuildContext context, String text) {
+  Gradient getButtonColor(BuildContext context, String text) {
+    final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
+    switch (text) {
+      // case 'DEG':
+      // case 'RAD':
+      //   return isDeg
+      //       ? CupertinoColors.systemGreen.withValues(alpha: 0.3)
+      //       : CupertinoColors.systemOrange.withValues(alpha: 0.3);
+      // case 'X':
+      //   return isDarkMode
+      //       ? CupertinoColors.systemPurple.withValues(alpha: 0.6)
+      //       : CupertinoColors.systemPurple.withValues(alpha: 0.3);
+
+      // case 'Y':
+      //   return isDarkMode
+      //       ? CupertinoColors.systemTeal.withValues(alpha: 0.6)
+      //       : CupertinoColors.systemTeal.withValues(alpha: 0.3);
+
+      // case 'shft':
+      //   return isShift
+      //       ? CupertinoColors.systemIndigo.withValues(alpha: 0.4)
+      //       : CupertinoColors.systemIndigo.withValues(alpha: 0.3);
+      // case 'AC':
+      //   return isDarkMode
+      //       ? CupertinoColors.systemRed.withValues(alpha: 0.6)
+      //       : CupertinoColors.systemRed.withValues(alpha: 0.3);
+
+      case '=':
+        return const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromRGBO(0, 122, 255, 0.75), // Active Blue
+            Color.fromRGBO(0, 198, 255, 0.45), // Light Cyan Accent
+          ],
+        );
+      case 'del':
+        return LinearGradient(colors: [Colors.transparent, Colors.transparent]);
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+      case '00':
+      case '.':
+        return isDarkMode
+            ? LinearGradient(colors: [Colors.black, Colors.black])
+            : LinearGradient(colors: [Colors.white, Colors.white]);
+      // case 'hist':
+      // case 'unit':
+      // case 'Settings':
+      // case 'Calc':
+      // case 'Copy':
+      // case 'Paste':
+      //   return LinearGradient(colors: [Colors.black, Colors.transparent]);
+      default:
+        return LinearGradient(
+          colors: [Colors.transparent, Colors.transparent],
+        ); // Default button color
+    }
+  }
+
+  Color getButtonBorderColor(BuildContext context, String text) {
     final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
     switch (text) {
       case 'DEG':
       case 'RAD':
         return isDeg
-            ? CupertinoColors.systemGreen.withValues(alpha: 0.3)
-            : CupertinoColors.systemOrange.withValues(alpha: 0.3);
+            ? const Color.fromRGBO(52, 199, 89, 0.56)
+            : const Color.fromRGBO(255, 149, 0, 0.6);
       case 'X':
         return isDarkMode
-            ? CupertinoColors.systemPurple.withValues(alpha: 0.6)
-            : CupertinoColors.systemPurple.withValues(alpha: 0.3);
+            ? const Color.fromRGBO(175, 82, 222, 1).withValues(alpha: 0.6)
+            : const Color.fromRGBO(175, 82, 222, 1).withValues(alpha: 0.3);
 
       case 'Y':
         return isDarkMode
-            ? CupertinoColors.systemTeal.withValues(alpha: 0.6)
-            : CupertinoColors.systemTeal.withValues(alpha: 0.3);
+            ? const Color.fromRGBO(90, 200, 250, 1).withValues(alpha: 0.6)
+            : const Color.fromRGBO(90, 200, 250, 1).withValues(alpha: 0.3);
 
       case 'shft':
         return isShift
@@ -1503,15 +1583,12 @@ class _CalcPageState extends ConsumerState<CalcPage>
             : CupertinoColors.systemIndigo.withValues(alpha: 0.3);
       case 'AC':
         return isDarkMode
-            ? CupertinoColors.systemRed.withValues(alpha: 0.6)
-            : CupertinoColors.systemRed.withValues(alpha: 0.3);
+            ? const Color.fromRGBO(255, 59, 48, 1)
+            : const Color.fromRGBO(255, 59, 48, 1);
 
       case '=':
-        return CupertinoColors.activeBlue.withValues(alpha: 0.5);
-      case 'del':
-        return isDarkMode
-            ? const Color.fromRGBO(30, 30, 30, 1)
-            : const Color.fromRGBO(229, 229, 234, 1);
+        return const Color.fromRGBO(0, 122, 255, 0.35);
+
       case '0':
       case '1':
       case '2':
@@ -1526,19 +1603,41 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case '.':
         return isDarkMode
             ? const Color.fromRGBO(16, 16, 16, 1)
-            : const Color.fromRGBO(250, 250, 250, 1);
+            : const Color.fromRGBO(240, 240, 240, 1);
       case 'hist':
       case 'unit':
       case 'Settings':
       case 'Calc':
+        // return const Color.fromRGBO(16, 16, 16, 1);
+
+        return CupertinoTheme.of(
+          context,
+        ).barBackgroundColor; // Use bar background for these
+
       case 'Copy':
       case 'Paste':
-        return CupertinoTheme.of(context)
-            .barBackgroundColor; // Use bar background for these
+        return const Color.fromRGBO(254, 254, 254, 1);
       default:
         return isDarkMode
             ? const Color.fromRGBO(30, 30, 30, 1)
-            : const Color.fromRGBO(229, 229, 234, 1); // Default button color
+            : const Color.fromRGBO(220, 220, 220, 0.9); // Default button color
+    }
+  }
+
+  double getButtonBorderSize(BuildContext context, String text) {
+    switch (text) {
+      case 'DEG':
+      case 'RAD':
+      case 'X':
+      case 'Y':
+      case 'shft':
+      case 'AC':
+        return 2;
+      case '=':
+        return 1.4;
+
+      default:
+        return 0.8; // Default button color
     }
   }
 
@@ -1546,7 +1645,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
     // final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
     switch (text) {
       case 'del':
-        return CupertinoColors.systemRed;
+        return const Color.fromRGBO(255, 59, 48, 0.75);
       case '=':
         return CupertinoColors.white;
       // case 'hist':
@@ -1562,89 +1661,112 @@ class _CalcPageState extends ConsumerState<CalcPage>
       //       ? CupertinoColors.systemGreen
       //       : CupertinoColors.systemGrey; // Consistent grey for icons
       default:
-        return CupertinoTheme.of(context)
-            .textTheme
-            .textStyle
-            .color!; // Use theme text color
+        return CupertinoTheme.of(
+          context,
+        ).textTheme.textStyle.color!; // Use theme text color
     }
   }
 
   double getButtonTextSize(String text, double btnSize) {
-    if (text == '00') return btnSize * 0.36;
+    if (text == '00') return btnSize * 0.32;
+    if (text == 'RAD') return btnSize * 0.29;
+    if (text == 'DEG') return btnSize * 0.29;
+    if (text == 'AC') return btnSize * 0.29;
+
     if (text.length > 1 && !RegExp(r'^\d+$').hasMatch(text)) {
-      return btnSize * 0.32;
+      return btnSize * 0.30;
     }
-    if (isDigit.hasMatch(text) || text == '.') return btnSize * 0.4;
+    if (isDigit.hasMatch(text) || text == '.') return btnSize * 0.34;
     if (text == '=' ||
         text == '+' ||
         text == '-' ||
         text == '×' ||
         text == '÷') {
-      return btnSize * 0.45;
+      return btnSize * 0.4;
     }
     if (text == 'X' || text == 'Y') {
-      return btnSize * 0.35;
+      return btnSize * 0.32;
     }
-    return btnSize * 0.38;
+    return btnSize * 0.34;
   }
 
-  Widget buildButton(BuildContext context, String text, double btnSize) {
-    final mediaQueryData = MediaQuery.of(context);
-    final screenHeight = mediaQueryData.size.height;
+  double getButtonSize(BuildContext context, String text, double btnSize) {
+    switch (text) {
+      case 'hist':
+      case 'unit':
+      case 'Settings':
+      case 'Calc':
+        return btnSize * 0.82; // Use bar background for these
 
-    Color buttonColor = getButtonColor(context, text);
+      default:
+        return btnSize;
+    }
+  }
+
+  // Widget buildButton(BuildContext context, String text, double btnSize) { this
+  Widget buildButton(
+    BuildContext context,
+    String text,
+    double width,
+    double height,
+  ) {
+    // final mediaQueryData = MediaQuery.of(context); this
+    // final screenHeight = mediaQueryData.size.height; thsi
+
+    Gradient buttonColor = getButtonColor(context, text);
+    Color buttonBorderColor = getButtonBorderColor(context, text);
+    double buttonBorderSize = getButtonBorderSize(context, text);
+    // double buttonSize = getButtonSize(context, text, btnSize);
+
     Color fgColor = getButtonForegroundColor(context, text);
 
     Widget content;
     if (text == 'shft') {
       content = Icon(
-          isShift
-              ? FluentIcons.keyboard_shift_uppercase_24_filled
-              : FluentIcons.keyboard_shift_uppercase_24_regular,
-          size: btnSize * 0.40,
-          color: fgColor);
+        isShift
+            ? FluentIcons.keyboard_shift_uppercase_24_filled
+            : FluentIcons.keyboard_shift_uppercase_24_regular,
+        size: 28,
+        color: fgColor,
+      );
     } else if (text == 'unit') {
       content = Icon(
         FluentIcons.diversity_24_regular,
-        size: btnSize * 0.45,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: Color.fromRGBO(20, 20, 20, 0.75),
       );
     } else if (text == 'Calc') {
       content = Icon(
         FluentIcons.calculator_24_filled,
-        size: btnSize * 0.45,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: Color.fromRGBO(20, 20, 20, 0.75),
       );
     } else if (text == 'hist') {
       content = Icon(
         FluentIcons.history_24_regular,
-        size: btnSize * 0.45,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: Color.fromRGBO(20, 20, 20, 0.75),
       );
     } else if (text == 'Settings') {
       content = Icon(
         FluentIcons.settings_24_regular,
-        size: btnSize * 0.45,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: Color.fromRGBO(20, 20, 20, 0.75),
       );
     } else if (text == 'Copy') {
       content = Icon(
         FluentIcons.copy_24_regular,
-        size: btnSize * 0.40,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: const Color.fromRGBO(142, 142, 147, 0.76),
       );
     } else if (text == 'Paste') {
       content = Icon(
         FluentIcons.clipboard_paste_24_regular,
-        size: btnSize * 0.40,
-        color: CupertinoColors.systemGrey,
+        size: 28,
+        color: const Color.fromRGBO(142, 142, 147, 0.76),
       );
     } else if (text == 'del') {
-      content = Icon(
-        FluentIcons.backspace_24_filled,
-        size: btnSize * 0.45,
-        color: fgColor,
-      );
+      content = Icon(FluentIcons.backspace_24_filled, size: 28, color: fgColor);
     } else {
       String displayText = (text == 'DEG') ? (isDeg ? 'DEG' : 'RAD') : text;
       if (isShift && {'sin', 'cos', 'tan', 'log'}.contains(displayText)) {
@@ -1664,57 +1786,61 @@ class _CalcPageState extends ConsumerState<CalcPage>
         }
       }
       content = Text(
+        textAlign: TextAlign.center, //
         displayText,
-        style: RegExp(r'^(0|1|2|3|4|5|6|7|8|9|00)$').hasMatch(text)
-            ? TextStyle(
-                fontFamily: 'RedditSans',
-                fontWeight: FontWeight.w400,
-                fontSize: getButtonTextSize(displayText, btnSize),
-                color: fgColor,
-                // fontWeight: (text == '=') ? FontWeight.bold : FontWeight.w500,
-              )
-            : TextStyle(
-                fontFamily: 'RedditSans',
-                fontWeight: FontWeight.w400,
-                fontSize: getButtonTextSize(displayText, btnSize),
-                color: fgColor,
-                // fontWeight: (text == '=') ? FontWeight.100 : FontWeight.w500,
-              ),
+        // style: RegExp(r'^(0|1|2|3|4|5|6|7|8|9|00)$').hasMatch(text)
+        // ? TextStyle(
+        //     fontFamily: 'RedditSans',
+        //     fontWeight: FontWeight.w400,
+        //     fontSize: getButtonTextSize(displayText, btnSize),
+        //     color: fgColor,
+        //     // fontWeight: (text == '=') ? FontWeight.bold : FontWeight.w500,
+        //   )
+        style: TextStyle(
+          fontFamily: 'RedditSans',
+          fontWeight: FontWeight.w400,
+          fontSize: getButtonTextSize(displayText, 28),
+          color: fgColor,
+        ),
       );
     }
 
-    final bool applyShadow = !(text == 'hist' ||
-        text == 'unit' ||
-        text == 'Calc' ||
-        text == 'Copy' ||
-        text == 'Paste' ||
-        text == 'Settings');
     final bool isEnabled = text != 'Calc';
-    return Container(
-      width: btnSize,
-      height: screenHeight * 0.055,
-      margin: EdgeInsets.all(btnSize * 0.04),
-      decoration: BoxDecoration(
-        color: buttonColor,
-        borderRadius: BorderRadius.circular(btnSize * 0.33),
-        boxShadow: applyShadow
-            ? [
-                BoxShadow(
-                  color: CupertinoColors.systemGrey.withValues(alpha: 0.1),
-                  spreadRadius: 0.5,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : null,
-      ),
-      child: CupertinoButton(
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(btnSize * 0.33),
-        onPressed: isEnabled ? () => buttonPressed(text) : null,
+    return CupertinoButton(
+      minimumSize: Size.zero,
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(25), // Changed to radius 15
+      onPressed: isEnabled ? () => buttonPressed(text) : null,
+      child: Container(
+        width: width, // Dynamically fills calculated width
+        height: height, // Dynamically fills calculated height
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15), // Changed to radius 15
+          border: Border.all(width: buttonBorderSize, color: buttonBorderColor),
+          gradient: buttonColor,
+        ),
         child: Center(child: content),
       ),
     );
+
+    // return CupertinoButton(
+    //   minimumSize: Size(0, 0),
+    //   padding: EdgeInsets.zero,
+    //   borderRadius: BorderRadius.circular(50),
+    //   onPressed: isEnabled ? () => buttonPressed(text) : null,
+    //   child: Container(
+    //     width: buttonSize * 1.08,
+    //     height: buttonSize * 0.85,
+    //     // height: screenHeight * 0.06,
+    //     decoration: BoxDecoration(
+    //       borderRadius: BorderRadius.circular(40),
+    //       border: Border.all(width: buttonBorderSize, color: buttonBorderColor),
+    //       // color: buttonColor,
+    //       gradient: buttonColor,
+    //     ),
+    //     child: Center(child: content),
+    //   ),
+    // );
   }
 
   @override
@@ -1725,17 +1851,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final safeAreaPadding = mediaQuery.padding;
     final effectiveScreenHeight =
         screenHeight - safeAreaPadding.top - safeAreaPadding.bottom;
-    final double horizontalPadding = screenWidth * 0.04;
-    final double verticalPadding = effectiveScreenHeight * 0.01;
-
-    final double buttonGridVerticalSpacing = effectiveScreenHeight * 0.01;
-    final double approxButtonSpacing = screenWidth * 0.025;
-    final double btnSize =
-        ((screenWidth - horizontalPadding - (4 * approxButtonSpacing)) / 5.8)
-            .clamp(45.0, 75.0);
-    final double bottomBtnSize = btnSize;
-    final double buttonWidthWithMargin = btnSize + (btnSize * 0.04 * 2);
-
+    final double btnSize = screenWidth * 0.125;
     if (_inputTextSizeAnimation is AlwaysStoppedAnimation) {
       _initializeAnimations();
     }
@@ -1746,15 +1862,12 @@ class _CalcPageState extends ConsumerState<CalcPage>
       backgroundColor: currentTheme.scaffoldBackgroundColor,
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding / 2,
-            vertical: verticalPadding,
-          ),
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             children: <Widget>[
               // --- Display Area ---
               Expanded(
-                flex: 4,
+                flex: 35,
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: screenWidth * 0.03,
@@ -1778,32 +1891,34 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                   // Replace the existing onTap handler in the mini history section with this corrected version
 
                                   // Simply use the result directly without any special processing
-                                  String cleanedResult =
-                                      entry.result.replaceAll(',', '');
+                                  String cleanedResult = entry.result
+                                      .replaceAll(',', '');
 
                                   setState(() {
                                     String newExpression;
                                     if (_rawExpression.isNotEmpty &&
-                                        isEndingWithOperator
-                                            .hasMatch(_rawExpression.trim())) {
+                                        isEndingWithOperator.hasMatch(
+                                          _rawExpression.trim(),
+                                        )) {
                                       newExpression =
                                           _rawExpression + cleanedResult;
                                     } else {
                                       newExpression = cleanedResult;
                                     }
                                     _rawExpression = newExpression;
-                                    String formattedText =
-                                        formatExpression(newExpression);
+                                    String formattedText = formatExpression(
+                                      newExpression,
+                                    );
                                     _rawCursorPosition = newExpression.length;
                                     int formattedCursorPos =
-                                        _rawToFormattedPositionMap[
-                                                _rawCursorPosition] ??
-                                            formattedText.length;
+                                        _rawToFormattedPositionMap[_rawCursorPosition] ??
+                                        formattedText.length;
 
                                     _inputController.value = TextEditingValue(
                                       text: formattedText,
                                       selection: TextSelection.collapsed(
-                                          offset: formattedCursorPos),
+                                        offset: formattedCursorPos,
+                                      ),
                                     );
                                     _validatePositionMaps();
                                     answer = '';
@@ -1826,7 +1941,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                         18.0,
                                       ),
                                       color: currentTheme
-                                          .textTheme.textStyle.color!
+                                          .textTheme
+                                          .textStyle
+                                          .color!
                                           .withValues(alpha: 0.7),
                                       // fontFamily: '42dots Sans',
                                     ),
@@ -1856,7 +1973,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
                             ),
                             child: IntrinsicWidth(
                               child: // In the build method, update the onTap handler for the CupertinoTextField
-                                  CupertinoTextField(
+                              CupertinoTextField(
                                 controller: _inputController,
                                 readOnly: true,
                                 showCursor: true,
@@ -1880,16 +1997,15 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                           0) {
                                     _inputController.selection =
                                         TextSelection.collapsed(
-                                      offset: _inputController.text.length,
-                                    );
+                                          offset: _inputController.text.length,
+                                        );
                                   } else {
                                     // Update raw cursor position when user taps
                                     int formattedPos =
                                         _inputController.selection.baseOffset;
                                     _rawCursorPosition =
-                                        _formattedToRawPositionMap[
-                                                formattedPos] ??
-                                            _rawExpression.length;
+                                        _formattedToRawPositionMap[formattedPos] ??
+                                        _rawExpression.length;
                                   }
                                 },
                               ),
@@ -1929,7 +2045,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                       color: isError
                                           ? CupertinoColors.systemRed
                                           : currentTheme
-                                              .textTheme.textStyle.color,
+                                                .textTheme
+                                                .textStyle
+                                                .color,
                                       // fontWeight: FontWeight.w500,
                                       // fontFamily: .inter',
                                     ),
@@ -1945,60 +2063,155 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   ),
                 ),
               ),
-              SizedBox(
-                height: screenHeight * 0.048,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    buildButton(context, "Copy", btnSize),
-                    buildButton(context, "Paste", btnSize),
-                    for (int i = 0; i < 3; i++)
-                      SizedBox(width: buttonWidthWithMargin),
-                  ],
-                ),
-              ),
               // --- Button Grid ---
               Expanded(
-                flex: 6,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    (stringList.length / 5).ceil(),
-                    (rowIndex) => Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: buttonGridVerticalSpacing / 2,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: List.generate(5, (columnIndex) {
-                          final index = rowIndex * 5 + columnIndex;
-                          if (index >= stringList.length) {
-                            return SizedBox(
-                              width: btnSize + (btnSize * 0.04 * 2),
-                            );
-                          }
-                          return buildButton(
-                            context,
-                            stringList[index],
-                            btnSize,
+                flex: 59,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final totalWidth = constraints.maxWidth;
+                    final availableHeight =
+                        constraints.maxHeight -
+                        15.0; // 15px bottom padding allowance
+                    const int columns = 5;
+                    final int totalItems = stringList.length;
+                    final int rows = (totalItems / columns).ceil();
+
+                    final double itemWidth = totalWidth / columns;
+                    const double runSpacing = 8.0; // Spacing between rows
+
+                    // Calculate width and height dynamically based on constraints
+                    final double btnWidth =
+                        itemWidth * 0.9; // 90% of column cell width
+                    final double btnHeight =
+                        ((availableHeight - ((rows - 1) * runSpacing)) / rows)
+                            .clamp(0.0, availableHeight);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 15.0),
+                      child: Wrap(
+                        runSpacing: runSpacing,
+                        children: stringList.map((item) {
+                          return SizedBox(
+                            width: itemWidth,
+                            child: Center(
+                              // Pass dynamic width and height to buildButton
+                              child: buildButton(
+                                context,
+                                item,
+                                btnWidth,
+                                btnHeight,
+                              ),
+                            ),
                           );
-                        }),
+                        }).toList(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // Expanded(
+              //   flex: 59,
+              //   child: LayoutBuilder(
+              //     builder: (context, constraints) {
+              //       final totalWidth = constraints.maxWidth;
+              //       final availableHeight = constraints.maxHeight - 15.0;
+              //       const int columns = 5;
+              //       final int totalItems = stringList.length;
+              //       final int rows = (totalItems / columns).ceil();
+              //       final itemWidth = totalWidth / columns;
+              //       final double buttonHeight = btnSize;
+              //       double dynamicRunSpacing = 0.0;
+              //       if (rows > 1) {
+              //         final double totalButtonHeight = rows * buttonHeight;
+              //         final double remainingHeight =
+              //             availableHeight - totalButtonHeight;
+
+              //         dynamicRunSpacing = (remainingHeight / (rows - 1)).clamp(
+              //           9.3,
+              //           double.infinity,
+              //         );
+              //       }
+
+              //       return Padding(
+              //         padding: const EdgeInsets.only(
+              //           bottom: 15.0,
+              //         ), // 15px bottom margin
+              //         child: Wrap(
+              //           runSpacing: dynamicRunSpacing,
+              //           children: stringList.map((item) {
+              //             return SizedBox(
+              //               width: itemWidth,
+              //               child: Center(
+              //                 child: buildButton(context, item, btnSize),
+              //               ),
+              //             );
+              //           }).toList(),
+              //         ),
+              //       );
+              //     },
+              //   ),
+              // ),
+              Expanded(
+                flex: 6,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6.0),
+                  child: Container(
+                    width: screenWidth,
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color.fromRGBO(
+                            4,
+                            0,
+                            255,
+                            0.25,
+                          ), // Purple glow
+                          blurRadius: 50,
+                          offset: const Offset(0, 45),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.22,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: BoxBorder.all(
+                            width: 2.4,
+                            color: Color.fromRGBO(255, 255, 255, 0.90),
+                          ),
+
+                          gradient: const LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.fromRGBO(250, 250, 250, 0.65),
+                              // Top border color
+                              Color.fromRGBO(
+                                254,
+                                254,
+                                254,
+                                0.35,
+                              ), // Bottom border color
+                            ],
+                          ),
+                          // color: Color.fromRGBO(255, 255, 255, 1),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            buildButton(context, "Calc", 28, 28),
+                            buildButton(context, "hist", 28, 28),
+                            buildButton(context, "unit", 28, 28),
+                            buildButton(context, "Settings", 28, 28),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(
-                height: screenHeight * 0.048,
-                // color: CupertinoColors.systemGroupedBackground,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    buildButton(context, "Calc", bottomBtnSize),
-                    buildButton(context, "hist", bottomBtnSize),
-                    buildButton(context, "unit", bottomBtnSize),
-                    buildButton(context, "Settings", bottomBtnSize),
-                  ],
                 ),
               ),
             ],
@@ -2050,17 +2263,20 @@ class _CalcPageState extends ConsumerState<CalcPage>
                       String rawResult = resultFromHistory.replaceAll(',', '');
 
                       debugPrint(
-                          "History tapped. Original result: '$resultFromHistory', "
-                          "Raw for calculation: '$rawResult'");
+                        "History tapped. Original result: '$resultFromHistory', "
+                        "Raw for calculation: '$rawResult'",
+                      );
 
                       if (mounted) {
                         setState(() {
                           String newExpression;
                           // Check if expression ends with an operator
                           if (_rawExpression.isNotEmpty &&
-                              isEndingWithOperator
-                                  .hasMatch(_rawExpression.trim())) {
-                            newExpression = _rawExpression +
+                              isEndingWithOperator.hasMatch(
+                                _rawExpression.trim(),
+                              )) {
+                            newExpression =
+                                _rawExpression +
                                 rawResult; // Use raw version for calculation
                           } else {
                             newExpression =
@@ -2070,8 +2286,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
                           _rawExpression = newExpression;
 
                           // Format the expression for display
-                          String formattedText =
-                              formatExpression(newExpression);
+                          String formattedText = formatExpression(
+                            newExpression,
+                          );
                           _inputController.value = TextEditingValue(
                             text: formattedText,
                             selection: TextSelection.collapsed(
@@ -2126,8 +2343,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
     showCupertinoModalPopup(
       context: parentContext,
       builder: (modalContext) {
-        final currentTheme =
-            CupertinoTheme.of(modalContext); // Get theme in modal context
+        final currentTheme = CupertinoTheme.of(
+          modalContext,
+        ); // Get theme in modal context
         return GestureDetector(
           onVerticalDragEnd: (details) {
             if (details.primaryVelocity != null &&
@@ -2153,8 +2371,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   width: 35,
                   margin: const EdgeInsets.symmetric(vertical: 10.0),
                   decoration: BoxDecoration(
-                    color: currentTheme.primaryColor
-                        .withValues(alpha: 0.3), // Use a theme color
+                    color: currentTheme.primaryColor.withValues(
+                      alpha: 0.3,
+                    ), // Use a theme color
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
@@ -2163,8 +2382,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
                 // Full Tools Page with tabs
                 const Expanded(
                   child: ToolsPage(
-                      isModal:
-                          true), // Use the full ToolsPage with tabs in modal mode
+                    isModal: true,
+                  ), // Use the full ToolsPage with tabs in modal mode
                 ),
               ],
             ),
@@ -2187,10 +2406,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
               color: const Color.fromRGBO(20, 20, 20, 0.80),
               borderRadius: BorderRadius.circular(25),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Center(
               child: Text(
                 message,
@@ -2208,8 +2424,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
     });
   }
 
-// Add this method to help debug cursor positioning issues
-// Add this method to validate position maps
+  // Add this method to help debug cursor positioning issues
+  // Add this method to validate position maps
   void _validatePositionMaps() {
     if (_rawExpression.isEmpty) {
       _formattedToRawPositionMap = {0: 0};
@@ -2222,8 +2438,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
       if (!_rawToFormattedPositionMap.containsKey(i)) {
         debugPrint("Warning: Missing mapping for raw position $i");
         // Add a fallback mapping
-        _rawToFormattedPositionMap[i] =
-            i.clamp(0, _inputController.text.length);
+        _rawToFormattedPositionMap[i] = i.clamp(
+          0,
+          _inputController.text.length,
+        );
       }
     }
 
@@ -2237,13 +2455,16 @@ class _CalcPageState extends ConsumerState<CalcPage>
     }
   }
 
-// Call this after formatting in setState blocks
+  // Call this after formatting in setState blocks
 } // End of _CalcPageState
 
 /// Evaluate [expr] through the exath_engine plugin, binding [vars] via a session
 /// (the plugin's top-level `evaluate` is stateless).
-ExathResult _exathEval(String expr,
-    {required AngleMode angle, Map<String, double> vars = const {}}) {
+ExathResult _exathEval(
+  String expr, {
+  required AngleMode angle,
+  Map<String, double> vars = const {},
+}) {
   final s = ExathSession(angleMode: angle);
   vars.forEach((name, value) => s.setVar(name, value));
   final r = s.eval(expr);

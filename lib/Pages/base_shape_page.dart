@@ -117,16 +117,20 @@ class _BaseShapePageState extends State<BaseShapePage>
       return units.firstWhere(
         (unit) =>
             unit['unit'].contains('²') && unit['unit'].startsWith(baseUnit),
-        orElse: () => units.firstWhere((unit) => unit['unit'].contains('²'),
-            orElse: () => units.first),
+        orElse: () => units.firstWhere(
+          (unit) => unit['unit'].contains('²'),
+          orElse: () => units.first,
+        ),
       )['unit'];
     }
     if (param.contains('Volume')) {
       return units.firstWhere(
         (unit) =>
             unit['unit'].contains('³') && unit['unit'].startsWith(baseUnit),
-        orElse: () => units.firstWhere((unit) => unit['unit'].contains('³'),
-            orElse: () => units.first),
+        orElse: () => units.firstWhere(
+          (unit) => unit['unit'].contains('³'),
+          orElse: () => units.first,
+        ),
       )['unit'];
     }
     return units.firstWhere(
@@ -144,9 +148,9 @@ class _BaseShapePageState extends State<BaseShapePage>
 
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copied to clipboard')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
   }
 
   void addToHistory(String expr, String res) {
@@ -166,26 +170,29 @@ class _BaseShapePageState extends State<BaseShapePage>
                 CupertinoActionSheetAction(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('No history available'),
-                )
+                ),
               ]
             : _history
-                .asMap()
-                .entries
-                .map(
-                  (entry) => CupertinoActionSheetAction(
-                    onPressed: () {
-                      _copyToClipboard(
-                          '${entry.value['expression']} = ${entry.value['result']}');
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      '${entry.value['expression']} = ${entry.value['result']}',
-                      style: const TextStyle(
-                          fontSize: 16, fontFamily: 'Reddit Sans'),
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => CupertinoActionSheetAction(
+                      onPressed: () {
+                        _copyToClipboard(
+                          '${entry.value['expression']} = ${entry.value['result']}',
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        '${entry.value['expression']} = ${entry.value['result']}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Reddit Sans',
+                        ),
+                      ),
                     ),
-                  ),
-                )
-                .toList(),
+                  )
+                  .toList(),
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
@@ -203,8 +210,9 @@ class _BaseShapePageState extends State<BaseShapePage>
         _focusNodes[param]!.unfocus();
         _unitSelections[param] = _getDefaultUnitForParameter(param, _baseUnit);
       }
-      _activeParameter =
-          widget.parameters.isNotEmpty ? widget.parameters.first : null;
+      _activeParameter = widget.parameters.isNotEmpty
+          ? widget.parameters.first
+          : null;
       _results.clear();
     });
   }
@@ -215,8 +223,9 @@ class _BaseShapePageState extends State<BaseShapePage>
       if (!mounted) return;
 
       final baseUnitOption = _baseUnitOptions.firstWhere(
-          (unit) => unit['unit'] == _baseUnit,
-          orElse: () => _baseUnitOptions.firstWhere((u) => u['unit'] == 'm'));
+        (unit) => unit['unit'] == _baseUnit,
+        orElse: () => _baseUnitOptions.firstWhere((u) => u['unit'] == 'm'),
+      );
 
       _baseUnit = baseUnitOption['unit'];
       double metersToBaseUnitFactor = baseUnitOption['factor'];
@@ -234,7 +243,8 @@ class _BaseShapePageState extends State<BaseShapePage>
               inputValuesInMeters[param] =
                   value / (metersToBaseUnitFactor * metersToBaseUnitFactor);
             } else if (param.contains('Volume')) {
-              inputValuesInMeters[param] = value /
+              inputValuesInMeters[param] =
+                  value /
                   (metersToBaseUnitFactor *
                       metersToBaseUnitFactor *
                       metersToBaseUnitFactor);
@@ -262,7 +272,8 @@ class _BaseShapePageState extends State<BaseShapePage>
       }
 
       debugPrint(
-          '[_calculate] Parsed input values (in meters): $inputValuesInMeters');
+        '[_calculate] Parsed input values (in meters): $inputValuesInMeters',
+      );
 
       Map<String, double> calculatedValuesInMeters = {};
       switch (widget.shapeType) {
@@ -277,7 +288,8 @@ class _BaseShapePageState extends State<BaseShapePage>
             if (length! <= 0 || width! <= 0 || height! <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Length, Width, and Height must be > 0')),
+                  content: Text('Length, Width, and Height must be > 0'),
+                ),
               );
               return;
             }
@@ -337,7 +349,8 @@ class _BaseShapePageState extends State<BaseShapePage>
             if (length! <= 0 || perimeter! <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Length and Perimeter must be > 0')),
+                  content: Text('Length and Perimeter must be > 0'),
+                ),
               );
               return;
             }
@@ -357,7 +370,8 @@ class _BaseShapePageState extends State<BaseShapePage>
             if (width! <= 0 || perimeter! <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Width and Perimeter must be > 0')),
+                  content: Text('Width and Perimeter must be > 0'),
+                ),
               );
               return;
             }
@@ -397,8 +411,8 @@ class _BaseShapePageState extends State<BaseShapePage>
             if (discriminant < 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content:
-                        Text('Inconsistent inputs: cannot form a rectangle')),
+                  content: Text('Inconsistent inputs: cannot form a rectangle'),
+                ),
               );
               return;
             }
@@ -421,9 +435,9 @@ class _BaseShapePageState extends State<BaseShapePage>
           if (inputValuesInMeters.containsKey('Side')) {
             side = inputValuesInMeters['Side'];
             if (side! <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Side must be > 0')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Side must be > 0')));
               return;
             }
             area = side * side;
@@ -432,9 +446,9 @@ class _BaseShapePageState extends State<BaseShapePage>
           } else if (inputValuesInMeters.containsKey('Area')) {
             area = inputValuesInMeters['Area'];
             if (area! <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Area must be > 0')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Area must be > 0')));
               return;
             }
             side = sqrt(area);
@@ -498,9 +512,9 @@ class _BaseShapePageState extends State<BaseShapePage>
           } else if (inputValuesInMeters.containsKey('Area')) {
             area = inputValuesInMeters['Area'];
             if (area! <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Area must be > 0')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Area must be > 0')));
               return;
             }
             radius = sqrt(area / pi);
@@ -554,8 +568,10 @@ class _BaseShapePageState extends State<BaseShapePage>
                   sideB + base <= sideA) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text(
-                          'Invalid triangle: sides do not form a triangle')),
+                    content: Text(
+                      'Invalid triangle: sides do not form a triangle',
+                    ),
+                  ),
                 );
                 return;
               }
@@ -587,8 +603,10 @@ class _BaseShapePageState extends State<BaseShapePage>
                   sideB + base <= sideA) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text(
-                          'Invalid triangle: sides do not form a triangle')),
+                    content: Text(
+                      'Invalid triangle: sides do not form a triangle',
+                    ),
+                  ),
                 );
                 return;
               }
@@ -611,8 +629,10 @@ class _BaseShapePageState extends State<BaseShapePage>
                 sideB + base <= sideA) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content:
-                        Text('Invalid triangle: sides do not form a triangle')),
+                  content: Text(
+                    'Invalid triangle: sides do not form a triangle',
+                  ),
+                ),
               );
               return;
             }
@@ -760,7 +780,8 @@ class _BaseShapePageState extends State<BaseShapePage>
       if (!mounted) return;
       setState(() {
         debugPrint(
-            '[_calculate] Calculated results (in m-based units before display conversion): $_results');
+          '[_calculate] Calculated results (in m-based units before display conversion): $_results',
+        );
         for (var param in widget.parameters) {
           if (!(_isInputEnabled[param] ?? false)) {
             _controllers[param]!.text = _results[param] ?? '';
@@ -770,21 +791,27 @@ class _BaseShapePageState extends State<BaseShapePage>
         if (calculatedValuesInMeters.isNotEmpty &&
             inputsForHistory.isNotEmpty) {
           String expr = inputsForHistory.entries
-              .map((e) =>
-                  '${e.key}=${_numberFormat.format(double.parse(e.value))} $_baseUnit')
+              .map(
+                (e) =>
+                    '${e.key}=${_numberFormat.format(double.parse(e.value))} $_baseUnit',
+              )
               .join(', ');
 
-          String res = calculatedValuesInMeters.entries.map((e) {
-            final displayUnitKey = _unitSelections[e.key] ??
-                _getDefaultUnitForParameter(e.key, _baseUnit);
-            final unitInfoList = widget.unitOptions[e.key] ?? [];
-            final unitInfo = unitInfoList.firstWhere(
-                (u) => u['unit'] == displayUnitKey,
-                orElse: () => {'factor': 1.0, 'unit': _baseUnit});
-            double displayFactor = unitInfo['factor'];
-            double valueInDisplayUnit = e.value * displayFactor;
-            return '${e.key}=${_numberFormat.format(valueInDisplayUnit)} $displayUnitKey';
-          }).join(', ');
+          String res = calculatedValuesInMeters.entries
+              .map((e) {
+                final displayUnitKey =
+                    _unitSelections[e.key] ??
+                    _getDefaultUnitForParameter(e.key, _baseUnit);
+                final unitInfoList = widget.unitOptions[e.key] ?? [];
+                final unitInfo = unitInfoList.firstWhere(
+                  (u) => u['unit'] == displayUnitKey,
+                  orElse: () => {'factor': 1.0, 'unit': _baseUnit},
+                );
+                double displayFactor = unitInfo['factor'];
+                double valueInDisplayUnit = e.value * displayFactor;
+                return '${e.key}=${_numberFormat.format(valueInDisplayUnit)} $displayUnitKey';
+              })
+              .join(', ');
           addToHistory(expr, res);
         }
       });
@@ -795,12 +822,15 @@ class _BaseShapePageState extends State<BaseShapePage>
     final units = widget.unitOptions[parameter] ?? [];
     if (units.isEmpty) return const SizedBox.shrink();
 
-    final currentUnit = _unitSelections[parameter] ??
+    final currentUnit =
+        _unitSelections[parameter] ??
         _getDefaultUnitForParameter(parameter, _baseUnit);
-    final currentIndex =
-        units.indexWhere((unit) => unit['unit'] == currentUnit);
+    final currentIndex = units.indexWhere(
+      (unit) => unit['unit'] == currentUnit,
+    );
     final controller = FixedExtentScrollController(
-        initialItem: currentIndex >= 0 ? currentIndex : 0);
+      initialItem: currentIndex >= 0 ? currentIndex : 0,
+    );
 
     return SizedBox(
       width: 110,
@@ -832,8 +862,8 @@ class _BaseShapePageState extends State<BaseShapePage>
                   alpha: isActive
                       ? 1.0
                       : (index == currentIndex - 2 || index == currentIndex + 2
-                          ? 0.4
-                          : 0.6),
+                            ? 0.4
+                            : 0.6),
                 ),
               ),
             ),
@@ -875,13 +905,18 @@ class _BaseShapePageState extends State<BaseShapePage>
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
                         alignment: Alignment.centerLeft,
                         decoration: const BoxDecoration(
-                            border: Border(
-                                bottom: BorderSide(
-                                    color: CupertinoColors.systemGrey4,
-                                    width: 0.5))),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CupertinoColors.systemGrey4,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
                         child: const Text(
                           'Select Base Unit',
                           style: TextStyle(
@@ -905,18 +940,21 @@ class _BaseShapePageState extends State<BaseShapePage>
                           },
                           scrollController: FixedExtentScrollController(
                             initialItem: _baseUnitOptions.indexWhere(
-                                (unit) => unit['unit'] == _baseUnit),
+                              (unit) => unit['unit'] == _baseUnit,
+                            ),
                           ),
                           children: _baseUnitOptions
-                              .map((unit) => Center(
-                                    child: Text(
-                                      unit['label'],
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontFamily: 'Reddit Sans',
-                                      ),
+                              .map(
+                                (unit) => Center(
+                                  child: Text(
+                                    unit['label'],
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontFamily: 'Reddit Sans',
                                     ),
-                                  ))
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -941,8 +979,9 @@ class _BaseShapePageState extends State<BaseShapePage>
               children: [
                 Text(
                   _baseUnitOptions.firstWhere(
-                          (unit) => unit['unit'] == _baseUnit,
-                          orElse: () => _baseUnitOptions[0])['label'] ??
+                        (unit) => unit['unit'] == _baseUnit,
+                        orElse: () => _baseUnitOptions[0],
+                      )['label'] ??
                       'Meter (m)',
                   style: const TextStyle(
                     fontSize: 16,
@@ -968,7 +1007,8 @@ class _BaseShapePageState extends State<BaseShapePage>
     final currentTheme = CupertinoTheme.of(context);
     final bool isInput = _isInputEnabled[parameter] ?? false;
 
-    final String displayUnitKey = _unitSelections[parameter] ??
+    final String displayUnitKey =
+        _unitSelections[parameter] ??
         _getDefaultUnitForParameter(parameter, _baseUnit);
     final unitsForParameter = widget.unitOptions[parameter] ?? [];
 
@@ -992,19 +1032,22 @@ class _BaseShapePageState extends State<BaseShapePage>
     if (valueInController.isNotEmpty) {
       if (!isInput) {
         try {
-          final valueInMeters =
-              double.parse(valueInController.replaceAll(',', ''));
+          final valueInMeters = double.parse(
+            valueInController.replaceAll(',', ''),
+          );
           final convertedValue = valueInMeters * conversionFactorToDisplayUnit;
           displayText = _numberFormat.format(convertedValue);
         } catch (e) {
           debugPrint(
-              'Error converting result value for $parameter to display unit: $e');
+            'Error converting result value for $parameter to display unit: $e',
+          );
           displayText = "Error";
         }
       } else {
         try {
-          final doubleValue =
-              double.parse(valueInController.replaceAll(',', ''));
+          final doubleValue = double.parse(
+            valueInController.replaceAll(',', ''),
+          );
           displayText = _numberFormat.format(doubleValue);
         } catch (e) {
           displayText = valueInController;
@@ -1040,25 +1083,28 @@ class _BaseShapePageState extends State<BaseShapePage>
                           _controllers[parameter]!.clear();
                           _activeParameter = parameter;
                           // Open native keyboard automatically upon enabling
-                          FocusScope.of(context)
-                              .requestFocus(_focusNodes[parameter]);
+                          FocusScope.of(
+                            context,
+                          ).requestFocus(_focusNodes[parameter]);
                         } else {
                           _controllers[parameter]!.clear();
                           _focusNodes[parameter]!.unfocus();
                           if (_activeParameter == parameter) {
                             _activeParameter = _isInputEnabled.entries
                                 .firstWhere(
-                                    (entry) =>
-                                        entry.value && entry.key != parameter,
-                                    orElse: () => MapEntry(
-                                        widget.parameters.first, false))
+                                  (entry) =>
+                                      entry.value && entry.key != parameter,
+                                  orElse: () =>
+                                      MapEntry(widget.parameters.first, false),
+                                )
                                 .key;
                           }
                         }
                         _calculate();
                       });
                     },
-                    onHorizontalDragUpdate: (!isInput &&
+                    onHorizontalDragUpdate:
+                        (!isInput &&
                             displayText.isNotEmpty &&
                             displayText != "Error")
                         ? (details) {
@@ -1067,18 +1113,22 @@ class _BaseShapePageState extends State<BaseShapePage>
                                   (_swipeOffsets[parameter]! + details.delta.dx)
                                       .clamp(-maxSwipeDistance, 0.0);
                               _swipeOffsets[parameter] = newOffset;
-                              _swipeAnimations[parameter] = Tween<double>(
-                                begin: _swipeAnimations[parameter]!.value,
-                                end: newOffset,
-                              ).animate(CurvedAnimation(
-                                parent: _swipeControllers[parameter]!,
-                                curve: Curves.easeInOut,
-                              ));
+                              _swipeAnimations[parameter] =
+                                  Tween<double>(
+                                    begin: _swipeAnimations[parameter]!.value,
+                                    end: newOffset,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: _swipeControllers[parameter]!,
+                                      curve: Curves.easeInOut,
+                                    ),
+                                  );
                               _swipeControllers[parameter]!.forward(from: 0.0);
                             });
                           }
                         : null,
-                    onHorizontalDragEnd: (!isInput &&
+                    onHorizontalDragEnd:
+                        (!isInput &&
                             displayText.isNotEmpty &&
                             displayText != "Error")
                         ? (details) {
@@ -1089,13 +1139,16 @@ class _BaseShapePageState extends State<BaseShapePage>
                               } else {
                                 _swipeOffsets[parameter] = 0.0;
                               }
-                              _swipeAnimations[parameter] = Tween<double>(
-                                begin: _swipeAnimations[parameter]!.value,
-                                end: _swipeOffsets[parameter]!,
-                              ).animate(CurvedAnimation(
-                                parent: _swipeControllers[parameter]!,
-                                curve: Curves.easeInOut,
-                              ));
+                              _swipeAnimations[parameter] =
+                                  Tween<double>(
+                                    begin: _swipeAnimations[parameter]!.value,
+                                    end: _swipeOffsets[parameter]!,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: _swipeControllers[parameter]!,
+                                      curve: Curves.easeInOut,
+                                    ),
+                                  );
                               _swipeControllers[parameter]!.forward(from: 0.0);
                             });
                           }
@@ -1142,22 +1195,27 @@ class _BaseShapePageState extends State<BaseShapePage>
                                       fontWeight: FontWeight.w400,
                                       fontFamily: 'Reddit Sans',
                                       color: currentTheme
-                                          .textTheme.textStyle.color,
+                                          .textTheme
+                                          .textStyle
+                                          .color,
                                     ),
                                     // Trigger phone keyboard with numeric layouts
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
-                                            decimal: true),
+                                          decimal: true,
+                                        ),
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(
-                                          RegExp(r'^\d*\.?\d*')),
+                                        RegExp(r'^\d*\.?\d*'),
+                                      ),
                                     ],
                                     readOnly: false,
                                     showCursor: true,
                                     cursorColor: currentTheme.primaryColor,
                                     decoration: const BoxDecoration(),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0),
+                                      vertical: 8.0,
+                                    ),
                                     clearButtonMode:
                                         OverlayVisibilityMode.editing,
                                   ),
@@ -1169,7 +1227,9 @@ class _BaseShapePageState extends State<BaseShapePage>
                                     fontSize: 18,
                                     fontFamily: 'Reddit Sans',
                                     color: currentTheme
-                                        .textTheme.textStyle.color
+                                        .textTheme
+                                        .textStyle
+                                        .color
                                         ?.withValues(alpha: 0.7),
                                   ),
                                 ),
@@ -1179,8 +1239,8 @@ class _BaseShapePageState extends State<BaseShapePage>
                             Text(
                               displayText.isNotEmpty
                                   ? (displayText == "Error"
-                                      ? "Error"
-                                      : '$displayText $currentDisplayUnitSymbol')
+                                        ? "Error"
+                                        : '$displayText $currentDisplayUnitSymbol')
                                   : '-',
                               style: TextStyle(
                                 fontSize: 22,
@@ -1189,10 +1249,15 @@ class _BaseShapePageState extends State<BaseShapePage>
                                 color: displayText == "Error"
                                     ? CupertinoColors.systemRed
                                     : (displayText.isNotEmpty
-                                        ? currentTheme.textTheme.textStyle.color
-                                        : currentTheme
-                                            .textTheme.textStyle.color!
-                                            .withValues(alpha: 0.5)),
+                                          ? currentTheme
+                                                .textTheme
+                                                .textStyle
+                                                .color
+                                          : currentTheme
+                                                .textTheme
+                                                .textStyle
+                                                .color!
+                                                .withValues(alpha: 0.5)),
                               ),
                               textAlign: TextAlign.left,
                             ),
@@ -1207,9 +1272,10 @@ class _BaseShapePageState extends State<BaseShapePage>
                   AnimatedBuilder(
                     animation: _swipeAnimations[parameter]!,
                     builder: (context, child) {
-                      double opacity = (-_swipeAnimations[parameter]!.value /
-                              maxSwipeDistance)
-                          .clamp(0.0, 1.0);
+                      double opacity =
+                          (-_swipeAnimations[parameter]!.value /
+                                  maxSwipeDistance)
+                              .clamp(0.0, 1.0);
                       return Positioned(
                         right: 0,
                         top: 0,
@@ -1229,7 +1295,8 @@ class _BaseShapePageState extends State<BaseShapePage>
                                 onPressed: opacity == 1.0
                                     ? () {
                                         _copyToClipboard(
-                                            '$displayText $currentDisplayUnitSymbol');
+                                          '$displayText $currentDisplayUnitSymbol',
+                                        );
                                         _swipeControllers[parameter]!.reverse();
                                         _swipeOffsets[parameter] = 0.0;
                                       }
@@ -1263,8 +1330,10 @@ class _BaseShapePageState extends State<BaseShapePage>
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: Text(widget.title,
-            style: const TextStyle(fontFamily: 'Reddit Sans')),
+        middle: Text(
+          widget.title,
+          style: const TextStyle(fontFamily: 'Reddit Sans'),
+        ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: _showHistory,
@@ -1279,8 +1348,9 @@ class _BaseShapePageState extends State<BaseShapePage>
                 padding: const EdgeInsets.all(16).copyWith(bottom: 8),
                 child: Column(
                   children: [
-                    ...widget.parameters
-                        .map((param) => _buildParameterCard(context, param)),
+                    ...widget.parameters.map(
+                      (param) => _buildParameterCard(context, param),
+                    ),
                   ],
                 ),
               ),
@@ -1288,18 +1358,23 @@ class _BaseShapePageState extends State<BaseShapePage>
             _buildBaseUnitPicker(),
             // Replaced on-screen layout keypad with explicit native alternative clear UI
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: CupertinoButton(
-                color: CupertinoColors.systemRed.withOpacity(0.9),
+                color: CupertinoColors.systemRed.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 onPressed: _clearInputs,
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.delete,
-                        color: CupertinoColors.white, size: 20),
+                    Icon(
+                      CupertinoIcons.delete,
+                      color: CupertinoColors.white,
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Clear All Inputs',

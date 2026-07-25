@@ -4,20 +4,14 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Enum to represent the current theme mode
-enum ThemeMode {
-  light,
-  dark,
-}
+enum ThemeMode { light, dark }
 
 // Class to hold theme preferences
 class ThemePreferences {
   final ThemeMode themeMode;
   final bool followSystemTheme;
 
-  ThemePreferences({
-    required this.themeMode,
-    required this.followSystemTheme,
-  });
+  ThemePreferences({required this.themeMode, required this.followSystemTheme});
 }
 
 // Provider for managing the theme preferences
@@ -90,15 +84,12 @@ class ThemeState {
   final ThemeMode themeMode;
   final bool followSystemTheme;
 
-  ThemeState({
-    required this.themeMode,
-    required this.followSystemTheme,
-  });
+  ThemeState({required this.themeMode, required this.followSystemTheme});
 }
 
 class ThemeNotifier extends StateNotifier<ThemeState> {
   ThemeNotifier()
-      : super(ThemeState(themeMode: ThemeMode.light, followSystemTheme: true)) {
+    : super(ThemeState(themeMode: ThemeMode.light, followSystemTheme: true)) {
     _loadThemePreferences();
   }
 
@@ -134,10 +125,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
       );
     } catch (e) {
       debugPrint('Error loading theme preferences: $e');
-      state = ThemeState(
-        themeMode: ThemeMode.light,
-        followSystemTheme: true,
-      );
+      state = ThemeState(themeMode: ThemeMode.light, followSystemTheme: true);
     }
   }
 
@@ -154,7 +142,9 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
   Future<void> _saveThemePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(
-        _themeModeKey, state.themeMode == ThemeMode.light ? 'light' : 'dark');
+      _themeModeKey,
+      state.themeMode == ThemeMode.light ? 'light' : 'dark',
+    );
     prefs.setBool(_followSystemThemeKey, state.followSystemTheme);
   }
 }
@@ -169,13 +159,13 @@ const lightTheme = CupertinoThemeData(
   primaryColor: CupertinoColors.activeBlue,
   // Use existing CupertinoColors for light theme
   barBackgroundColor: Color.fromRGBO(242, 242, 242, 0),
-  scaffoldBackgroundColor: Color.fromRGBO(242, 242, 242, 1),
+  scaffoldBackgroundColor: Color.fromRGBO(249, 249, 249, 1),
   textTheme: CupertinoTextThemeData(
     textStyle: TextStyle(
       fontFamily: 'RedditSans',
 
       // fontFamily: 'Inter',
-      color: CupertinoColors.black, // Dark text for light theme
+      color: Color.fromRGBO(20, 20, 20, 0.65), // Dark text for light theme
     ),
 
     // actionTextStyle: TextStyle(
@@ -218,12 +208,8 @@ const darkTheme = CupertinoThemeData(
       fontFamily: 'Inter',
       color: CupertinoColors.white, // Light text for dark theme
     ),
-    actionTextStyle: TextStyle(
-      fontFamily: 'Inter',
-    ),
-    tabLabelTextStyle: TextStyle(
-      fontFamily: 'Inter',
-    ),
+    actionTextStyle: TextStyle(fontFamily: 'Inter'),
+    tabLabelTextStyle: TextStyle(fontFamily: 'Inter'),
     navTitleTextStyle: TextStyle(
       fontFamily: 'Inter',
       fontSize: 17,
@@ -236,11 +222,7 @@ const darkTheme = CupertinoThemeData(
       fontWeight: FontWeight.w700,
       color: CupertinoColors.white, // Light text for dark theme
     ),
-    pickerTextStyle: TextStyle(
-      fontFamily: 'Inter',
-    ),
-    dateTimePickerTextStyle: TextStyle(
-      fontFamily: 'Inter',
-    ),
+    pickerTextStyle: TextStyle(fontFamily: 'Inter'),
+    dateTimePickerTextStyle: TextStyle(fontFamily: 'Inter'),
   ),
 );
