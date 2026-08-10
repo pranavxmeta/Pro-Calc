@@ -1565,8 +1565,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case 'DEG':
       case 'RAD':
         return isDeg
-            ? const Color.fromRGBO(52, 199, 89, 0.56)
-            : const Color.fromRGBO(255, 149, 0, 0.6);
+            ? const Color.fromRGBO(52, 199, 89, 0.36)
+            : const Color.fromRGBO(255, 149, 0, 0.3);
       case 'X':
         return isDarkMode
             ? const Color.fromRGBO(175, 82, 222, 1).withValues(alpha: 0.6)
@@ -1583,8 +1583,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
             : CupertinoColors.systemIndigo.withValues(alpha: 0.3);
       case 'AC':
         return isDarkMode
-            ? const Color.fromRGBO(255, 59, 48, 1)
-            : const Color.fromRGBO(255, 59, 48, 1);
+            ? const Color.fromRGBO(255, 0, 0, 0.4)
+            : const Color.fromRGBO(255, 0, 0, 0.4);
 
       case '=':
         return const Color.fromRGBO(0, 122, 255, 0.35);
@@ -1668,26 +1668,27 @@ class _CalcPageState extends ConsumerState<CalcPage>
   }
 
   double getButtonTextSize(String text, double btnSize) {
-    if (text == '00') return btnSize * 0.32;
-    if (text == 'RAD') return btnSize * 0.29;
+    if (text == '00') return 20;
+    if (text == 'RAD') return 20;
     if (text == 'DEG') return btnSize * 0.29;
     if (text == 'AC') return btnSize * 0.29;
+    if (text == 'empty') return 10;
 
     if (text.length > 1 && !RegExp(r'^\d+$').hasMatch(text)) {
-      return btnSize * 0.30;
+      return 24;
     }
-    if (isDigit.hasMatch(text) || text == '.') return btnSize * 0.34;
+    if (isDigit.hasMatch(text) || text == '.') 24;
     if (text == '=' ||
         text == '+' ||
         text == '-' ||
         text == '×' ||
         text == '÷') {
-      return btnSize * 0.4;
+      return 32;
     }
     if (text == 'X' || text == 'Y') {
-      return btnSize * 0.32;
+      return 20;
     }
-    return btnSize * 0.34;
+    return 25;
   }
 
   double getButtonSize(BuildContext context, String text, double btnSize) {
@@ -1733,25 +1734,25 @@ class _CalcPageState extends ConsumerState<CalcPage>
       content = Icon(
         FluentIcons.diversity_24_regular,
         size: 28,
-        color: Color.fromRGBO(20, 20, 20, 0.75),
+        color: Color.fromRGBO(20, 20, 20, 0.85),
       );
     } else if (text == 'Calc') {
       content = Icon(
         FluentIcons.calculator_24_filled,
         size: 28,
-        color: Color.fromRGBO(20, 20, 20, 0.75),
+        color: Color.fromRGBO(20, 20, 20, 0.85),
       );
     } else if (text == 'hist') {
       content = Icon(
         FluentIcons.history_24_regular,
         size: 28,
-        color: Color.fromRGBO(20, 20, 20, 0.75),
+        color: Color.fromRGBO(20, 20, 20, 0.85),
       );
     } else if (text == 'Settings') {
       content = Icon(
         FluentIcons.settings_24_regular,
         size: 28,
-        color: Color.fromRGBO(20, 20, 20, 0.75),
+        color: Color.fromRGBO(20, 20, 20, 0.85),
       );
     } else if (text == 'Copy') {
       content = Icon(
@@ -2165,10 +2166,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
                             4,
                             0,
                             255,
-                            0.25,
+                            0.35,
                           ), // Purple glow
-                          blurRadius: 50,
-                          offset: const Offset(0, 45),
+                          blurRadius: 40,
+                          offset: const Offset(0, 55),
                         ),
                       ],
                     ),

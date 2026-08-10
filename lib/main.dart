@@ -13,9 +13,9 @@ Future<void> initializeApp() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-    if (Platform.isAndroid) {
-      await FlutterDisplayMode.setHighRefreshRate();
-    }
+    // if (Platform.isAndroid) {
+    //   await FlutterDisplayMode.setHighRefreshRate();
+    // }
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
@@ -46,20 +46,24 @@ class ProCalc extends ConsumerWidget {
 
     if (themeState.followSystemTheme) {
       final brightness = MediaQuery.platformBrightnessOf(context);
-      effectiveThemeMode =
-          brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light;
+      effectiveThemeMode = brightness == Brightness.dark
+          ? ThemeMode.dark
+          : ThemeMode.light;
     }
 
-    final theme =
-        effectiveThemeMode == ThemeMode.light ? lightTheme : darkTheme;
+    final theme = effectiveThemeMode == ThemeMode.light
+        ? lightTheme
+        : darkTheme;
 
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: theme.barBackgroundColor,
-      systemNavigationBarColor: theme.barBackgroundColor,
-      systemNavigationBarIconBrightness: effectiveThemeMode == ThemeMode.light
-          ? Brightness.dark
-          : Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: theme.barBackgroundColor,
+        systemNavigationBarColor: theme.barBackgroundColor,
+        systemNavigationBarIconBrightness: effectiveThemeMode == ThemeMode.light
+            ? Brightness.dark
+            : Brightness.light,
+      ),
+    );
 
     final orientation = MediaQuery.of(context).orientation;
 
