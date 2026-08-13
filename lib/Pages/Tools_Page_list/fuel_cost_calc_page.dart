@@ -1,5 +1,5 @@
 // lib/pages/calculators/fuel_cost_calc_page.dart
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:intl/intl.dart';
 
 // For more complex unit handling, consider dedicated enums and conversion factors

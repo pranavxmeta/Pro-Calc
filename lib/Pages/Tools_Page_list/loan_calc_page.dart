@@ -1,5 +1,5 @@
 // lib/pages/calculators/loan_calc_page.dart
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'dart:math' as math;
 import 'package:intl/intl.dart';
 

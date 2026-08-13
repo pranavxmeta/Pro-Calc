@@ -31,6 +31,8 @@ dependencies:
   font_awesome_flutter: ^11.0.0
   url_launcher: ^6.3.1
 
+  cupertino_ui: any
+  material_ui: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

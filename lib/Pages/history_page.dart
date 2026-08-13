@@ -1,9 +1,9 @@
 // import 'dart:developer';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import '../models/calculation_history.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 // import 'package:flutter/services.dart';
 
 // Color constants

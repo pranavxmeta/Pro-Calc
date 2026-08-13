@@ -1,13 +1,13 @@
 import 'package:exath_engine/exath_engine.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/calculation_history.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/material.dart' hide ThemeMode;
+import 'package:material_ui/material_ui.dart' hide ThemeMode;
 import 'tools_page.dart';
 
 import 'history_page.dart';
