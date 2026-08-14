@@ -629,6 +629,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  quantify:
+    dependency: "direct main"
+    description:
+      name: quantify
+      sha256: "028865036b77b83165a08c0e92add236287b075b761d6ffb20f59a500f0786dc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.21.0"
   record_use:
     dependency: transitive
     description:

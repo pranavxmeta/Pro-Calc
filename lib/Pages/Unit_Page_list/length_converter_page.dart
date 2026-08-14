@@ -1,54 +1,70 @@
-//length_converter_page
 import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:quantify/quantify.dart';
+import '../../models/units_info.dart';
 import '../base_converter_page.dart';
 
 class LengthConverterPage extends StatelessWidget {
   const LengthConverterPage({super.key});
 
-  // Available units for conversion
-  static final List<String> _units = [
-    'Meters',
-    'Kilometers',
-    'Centimeters',
-    'Millimeters',
-    'Miles',
-    'Yards',
-    'Feet',
-    'Inches',
-    'Nautical Miles',
+  static const List<UnitInfo<LengthUnit>> _units = [
+    UnitInfo(
+      unit: LengthUnit.millimeter,
+      displayName: 'Millimeters',
+      symbol: 'mm',
+      rank: 1,
+    ),
+    UnitInfo(
+      unit: LengthUnit.centimeter,
+      displayName: 'Centimeters',
+      symbol: 'cm',
+      rank: 2,
+    ),
+    UnitInfo(
+      unit: LengthUnit.meter,
+      displayName: 'Meters',
+      symbol: 'm',
+      rank: 3,
+    ),
+    UnitInfo(
+      unit: LengthUnit.kilometer,
+      displayName: 'Kilometers',
+      symbol: 'km',
+      rank: 4,
+    ),
+    UnitInfo(
+      unit: LengthUnit.inch,
+      displayName: 'Inches',
+      symbol: 'in',
+      rank: 5,
+    ),
+    UnitInfo(unit: LengthUnit.foot, displayName: 'Feet', symbol: 'ft', rank: 6),
+    UnitInfo(
+      unit: LengthUnit.yard,
+      displayName: 'Yards',
+      symbol: 'yd',
+      rank: 7,
+    ),
+    UnitInfo(
+      unit: LengthUnit.mile,
+      displayName: 'Miles',
+      symbol: 'mi',
+      rank: 8,
+    ),
+    UnitInfo(
+      unit: LengthUnit.nauticalMile,
+      displayName: 'Nautical Miles',
+      symbol: 'nmi',
+      rank: 9,
+    ),
   ];
-
-  // Conversion rates based on 1 unit = X Meters
-  static final Map<String, double> _conversionRatesFromMeters = {
-    'Meters': 1.0,
-    'Kilometers': 1000.0,
-    'Centimeters': 0.01,
-    'Millimeters': 0.001,
-    'Miles': 1609.34,
-    'Yards': 0.9144,
-    'Feet': 0.3048,
-    'Inches': 0.0254,
-    'Nautical Miles': 1852.0,
-  };
-
-  String _handleConversion(String input, String fromUnit, String toUnit) {
-    try {
-      double value = double.parse(input);
-      double valueInMeters = value * _conversionRatesFromMeters[fromUnit]!;
-      double result = valueInMeters / _conversionRatesFromMeters[toUnit]!;
-      return result.toStringAsFixed(6);
-    } catch (e) {
-      return 'Error';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    return BaseConverterPage(
+    return BaseConverterPage<LengthUnit, Length>(
       title: 'Length Converter',
       units: _units,
-      conversionRates: _conversionRatesFromMeters,
-      onConvert: _handleConversion,
+      createQuantity: (val, unit) => Length(val, unit),
+      evaluateUnit: (qty, targetUnit) => qty.getValue(targetUnit),
     );
   }
 }

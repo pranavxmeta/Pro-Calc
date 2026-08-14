@@ -1,196 +1,124 @@
-import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:flutter/services.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/calculation_history.dart';
+import '../models/units_info.dart';
 import 'history_page.dart';
 
-class BaseConverterPage extends StatefulWidget {
+class BaseConverterPage<U extends Enum, Q> extends StatefulWidget {
   final String title;
-  final List<String> units;
-  final Function(String, String, String) onConvert;
-  final Map<String, double> conversionRates;
+  final List<UnitInfo<U>> units;
+  final Q Function(double value, U unit) createQuantity;
+  final double Function(Q quantity, U targetUnit) evaluateUnit;
 
   const BaseConverterPage({
     super.key,
     required this.title,
     required this.units,
-    required this.onConvert,
-    required this.conversionRates,
+    required this.createQuantity,
+    required this.evaluateUnit,
   });
 
   @override
-  State<BaseConverterPage> createState() => _BaseConverterPageState();
+  State<BaseConverterPage<U, Q>> createState() =>
+      _BaseConverterPageState<U, Q>();
 }
 
-class _BaseConverterPageState extends State<BaseConverterPage> {
+class _BaseConverterPageState<U extends Enum, Q>
+    extends State<BaseConverterPage<U, Q>> {
   final TextEditingController _inputController = TextEditingController();
-  String _fromUnit = '';
-  String _toUnit = '';
-  String _result = '';
-  List<CalculationHistory> history = [];
-  static const _historyKey = 'calculator_history_v8';
+  late UnitInfo<U> _selectedUnit;
+  List<CalculationHistory> _history = [];
+  static const String _historyKey = 'calculator_history_v8';
 
-  final Map<String, int> _unitRank = {
-    'mm': 1,
-    'cm': 2,
-    'm': 3,
-    'km': 4,
-    'miles': 5,
-    'mm²': 1,
-    'cm²': 2,
-    'm²': 3,
-    'km²': 4,
-    'mi²': 5,
-    'ml': 1,
-    'l': 2,
-    'm³': 3,
-    'pa': 1,
-    'kpa': 2,
-    'bar': 3,
-    'w': 1,
-    'kw': 2,
-    'mw': 3,
-    '°C': 1,
-    '°F': 2,
-    'K': 3,
-    'm/s': 1,
-    'km/h': 2,
-    'mph': 3,
-    's': 1,
-    'min': 2,
-    'h': 3,
-    'd': 4,
-    'B': 1,
-    'KB': 2,
-    'MB': 3,
-    'GB': 4,
-    '°': 1,
-    'rad': 2,
-    'USD': 1,
-    'EUR': 2,
-    'mpg': 1,
-    'l/100km': 2,
-    'Hz': 1,
-    'kHz': 2,
-    'mhz': 3,
-    'N': 1,
-    'kgf': 2,
-    'lbf': 3,
-    'dB': 1,
-    'Np': 2,
-    'lx': 1,
-    'fc': 2,
-  };
+  // Cached sorted list (excluding active unit)
+  late List<UnitInfo<U>> _displayUnits;
 
-  // Helper mapping full unit name to short acronym/badge label
-  String _getAcronym(String unit) {
-    final Map<String, String> acronyms = {
-      'Meters': 'm',
-      'Kilometers': 'km',
-      'Centimeters': 'cm',
-      'Millimeters': 'mm',
-      'Miles': 'mi',
-      'Yards': 'yd',
-      'Feet': 'ft',
-      'Inches': 'in',
-      'Nautical Miles': 'nmi',
-      'Square Meters': 'm²',
-      'Square Kilometers': 'km²',
-      'Square Centimeters': 'cm²',
-      'Liters': 'l',
-      'Milliliters': 'ml',
-      'Cubic Meters': 'm³',
-      'Celsius': '°C',
-      'Fahrenheit': '°F',
-      'Kelvin': 'K',
-      'Seconds': 's',
-      'Minutes': 'min',
-      'Hours': 'h',
-      'Days': 'd',
-      'Bytes': 'B',
-      'Kilobytes': 'KB',
-      'Megabytes': 'MB',
-      'Gigabytes': 'GB',
-      'Pascals': 'Pa',
-      'Kilopascals': 'kPa',
-      'Bar': 'bar',
-      'Watts': 'W',
-      'Kilowatts': 'kW',
-      'Megawatts': 'mW',
-    };
-    return acronyms[unit] ?? (unit.length > 3 ? unit.substring(0, 3) : unit);
+  @override
+  void initState() {
+    super.initState();
+    _selectedUnit = widget.units.first;
+    _updateDisplayUnits();
+    _loadHistory();
   }
 
-  // Formatting Rule: up to 5 integer digits and exactly 3 decimal places.
-  // Beyond that threshold, represent using superscript scientific notation.
-  String _formatValue(String valueStr) {
-    if (valueStr.isEmpty || valueStr == 'Error') return '';
-    final double? value = double.tryParse(valueStr);
-    if (value == null) return valueStr;
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
+  void _updateDisplayUnits() {
+    _displayUnits =
+        widget.units.where((u) => u.unit != _selectedUnit.unit).toList()
+          ..sort((a, b) => a.rank.compareTo(b.rank));
+  }
+
+  // Fast math string formatting
+  static const Map<String, String> _superscriptMap = {
+    '-': '⁻',
+    '0': '⁰',
+    '1': '¹',
+    '2': '²',
+    '3': '³',
+    '4': '⁴',
+    '5': '⁵',
+    '6': '⁶',
+    '7': '⁷',
+    '8': '⁸',
+    '9': '⁹',
+    '+': '⁺',
+  };
+
+  String _formatNumericValue(double value) {
     if (value == 0.0) return '0.000';
 
-    final double absValue = value.abs();
-    if (absValue >= 100000.0 || (absValue > 0.0 && absValue < 0.001)) {
-      String expStr = value.toStringAsExponential(3);
-      final parts = expStr.split('e');
+    final double absVal = value.abs();
+    if (absVal >= 100000.0 || (absVal > 0.0 && absVal < 0.001)) {
+      final String expStr = value.toStringAsExponential(3);
+      final List<String> parts = expStr.split('e');
       if (parts.length == 2) {
-        final base = parts[0];
-        final Map<String, String> superscriptMap = {
-          '-': '⁻',
-          '0': '⁰',
-          '1': '¹',
-          '2': '²',
-          '3': '³',
-          '4': '⁴',
-          '5': '⁵',
-          '6': '⁶',
-          '7': '⁷',
-          '8': '⁸',
-          '9': '⁹',
-          '+': '⁺',
-        };
-        String superscriptExponent = parts[1]
+        final String base = parts[0];
+        final String exponent = parts[1]
             .split('')
-            .map((char) => superscriptMap[char] ?? char)
+            .map((char) => _superscriptMap[char] ?? char)
             .join('');
-        return '$base × 10$superscriptExponent';
+        return '$base × 10$exponent';
       }
       return expStr;
-    } else {
-      return value.toStringAsFixed(3);
     }
+    return value.toStringAsFixed(3);
   }
 
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
-    showOverlayMessage('Copied to clipboard');
+    _showOverlayMessage('Copied to clipboard');
   }
 
   Future<void> _pasteFromClipboard() async {
-    final clipboardData = await Clipboard.getData('text/plain');
+    final ClipboardData? clipboardData = await Clipboard.getData('text/plain');
     if (clipboardData != null && clipboardData.text != null) {
-      final pastedText = clipboardData.text!;
+      final String pastedText = clipboardData.text!.trim();
       if (RegExp(r'^[0-9]*\.?[0-9]*$').hasMatch(pastedText)) {
         setState(() {
           _inputController.text = pastedText;
           _inputController.selection = TextSelection.collapsed(
             offset: pastedText.length,
           );
-          _convert();
         });
       } else {
-        showOverlayMessage('Invalid number format');
+        _showOverlayMessage('Invalid number format');
       }
     }
   }
 
   void _showHistoryModal() {
-    showCupertinoModalPopup(
+    showCupertinoModalPopup<void>(
       context: context,
       builder: (modalContext) {
-        final currentTheme = CupertinoTheme.of(modalContext);
+        final CupertinoThemeData currentTheme = CupertinoTheme.of(modalContext);
         return GestureDetector(
           onVerticalDragEnd: (details) {
             if (details.primaryVelocity != null &&
@@ -220,9 +148,11 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                 ),
                 Expanded(
                   child: HistoryPage(
-                    history: history,
+                    history: _history,
                     onExpressionTap: (String result) {
-                      final cleanedResult = result.replaceAll(',', '');
+                      final String cleanedResult = result
+                          .replaceAll(',', '')
+                          .trim();
                       if (RegExp(
                         r'^[0-9]*\.?[0-9]*$',
                       ).hasMatch(cleanedResult)) {
@@ -231,11 +161,10 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                           _inputController.selection = TextSelection.collapsed(
                             offset: cleanedResult.length,
                           );
-                          _convert();
                         });
                         Navigator.pop(modalContext);
                       } else {
-                        showOverlayMessage('Invalid number format');
+                        _showOverlayMessage('Invalid number format');
                       }
                     },
                     onClear: () {
@@ -252,64 +181,23 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fromUnit = widget.units.first;
-    _toUnit = widget.units[1];
-    _loadHistory();
-  }
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
-  }
-
-  void _convert() {
-    if (_inputController.text.isEmpty) {
-      setState(() => _result = '');
-      return;
-    }
-    String result = widget.onConvert(_inputController.text, _fromUnit, _toUnit);
-    setState(() => _result = result);
-  }
-
-  Map<String, String> _convertToAllUnits() {
-    Map<String, String> results = {};
-    if (_inputController.text.isEmpty) return results;
-
-    try {
-      for (String unit in widget.units) {
-        if (unit != _fromUnit) {
-          String result = widget.onConvert(
-            _inputController.text,
-            _fromUnit,
-            unit,
-          );
-          results[unit] = result;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error converting to all units: $e');
-    }
-    return results;
-  }
-
   Future<void> _loadHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_historyKey);
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? jsonString = prefs.getString(_historyKey);
       if (jsonString != null) {
-        final List<dynamic> jsonList = jsonDecode(jsonString);
-        final loadedHistory = jsonList
-            .map((json) => CalculationHistory.fromJson(json))
+        final List<dynamic> jsonList = jsonDecode(jsonString) as List<dynamic>;
+        final List<CalculationHistory> loadedHistory = jsonList
+            .map(
+              (json) =>
+                  CalculationHistory.fromJson(json as Map<String, dynamic>),
+            )
             .toList()
             .reversed
             .toList();
         if (mounted) {
           setState(() {
-            history = loadedHistory;
+            _history = loadedHistory;
           });
         }
       }
@@ -320,8 +208,10 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
 
   Future<void> _saveHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonList = history.reversed.map((entry) => entry.toJson()).toList();
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> jsonList = _history.reversed
+          .map((entry) => entry.toJson())
+          .toList();
       await prefs.setString(_historyKey, jsonEncode(jsonList));
     } catch (e) {
       debugPrint('Error saving history: $e');
@@ -331,16 +221,16 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
   Future<void> _clearHistory() async {
     if (mounted) {
       setState(() {
-        history.clear();
+        _history.clear();
       });
       await _saveHistory();
-      showOverlayMessage('History Cleared');
+      _showOverlayMessage('History Cleared');
     }
   }
 
-  void showOverlayMessage(String message) {
-    final overlay = Navigator.of(context).overlay!;
-    final overlayEntry = OverlayEntry(
+  void _showOverlayMessage(String message) {
+    final OverlayState overlay = Navigator.of(context).overlay!;
+    final OverlayEntry overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         bottom: 100,
         left: 32,
@@ -376,11 +266,11 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
   // Single Card Layout
   Widget _buildUnitCard(
     BuildContext context,
-    String unit,
+    UnitInfo<U> unitInfo,
     String formattedValue,
     String rawValue,
   ) {
-    final currentTheme = CupertinoTheme.of(context);
+    final CupertinoThemeData currentTheme = CupertinoTheme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -392,7 +282,6 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Top Row: Acronym Badge & Full Name
           Row(
             children: [
               Container(
@@ -402,7 +291,7 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  _getAcronym(unit),
+                  unitInfo.symbol,
                   style: const TextStyle(
                     color: CupertinoColors.white,
                     fontSize: 11,
@@ -413,7 +302,7 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  unit,
+                  unitInfo.displayName,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13,
@@ -424,7 +313,6 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
               ),
             ],
           ),
-          // Bottom Row: Calculated Value Display & Copy Action
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -459,17 +347,17 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
     );
   }
 
-  // Base Unit Scrollable Row Selector
+  // Base Unit Horizontal Selector
   Widget _buildBaseUnitSelector() {
-    final currentTheme = CupertinoTheme.of(context);
+    final CupertinoThemeData currentTheme = CupertinoTheme.of(context);
     return SizedBox(
       height: 38,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: widget.units.length,
         itemBuilder: (context, index) {
-          final unit = widget.units[index];
-          final isSelected = unit == _fromUnit;
+          final UnitInfo<U> item = widget.units[index];
+          final bool isSelected = item.unit == _selectedUnit.unit;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: CupertinoButton(
@@ -480,12 +368,12 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
               borderRadius: BorderRadius.circular(10),
               onPressed: () {
                 setState(() {
-                  _fromUnit = unit;
-                  _convert();
+                  _selectedUnit = item;
+                  _updateDisplayUnits();
                 });
               },
               child: Text(
-                _getAcronym(unit),
+                item.symbol,
                 style: TextStyle(
                   fontSize: 13,
                   color: isSelected
@@ -501,9 +389,9 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
     );
   }
 
-  // Pinned Bottom control section containing base selector, input field, and action utilities
+  // Pinned Bottom Panel
   Widget _buildBottomPanel() {
-    final currentTheme = CupertinoTheme.of(context);
+    final CupertinoThemeData currentTheme = CupertinoTheme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -554,9 +442,7 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
-                    onChanged: (value) {
-                      _convert();
-                    },
+                    onChanged: (_) => setState(() {}),
                     suffix: CupertinoButton(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       onPressed: _pasteFromClipboard,
@@ -604,27 +490,15 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = CupertinoTheme.of(context);
-    final allConversions = _convertToAllUnits();
+    final CupertinoThemeData currentTheme = CupertinoTheme.of(context);
 
-    final sortedUnits = widget.units.where((unit) => unit != _fromUnit).toList()
-      ..sort((a, b) {
-        String aKey = a
-            .toLowerCase()
-            .replaceAll(' ', '')
-            .replaceAll('(', '')
-            .replaceAll(')', '')
-            .replaceAll('per', '/')
-            .substring(0, a.length > 3 ? 3 : a.length);
-        String bKey = b
-            .toLowerCase()
-            .replaceAll(' ', '')
-            .replaceAll(')', '')
-            .replaceAll('(', '')
-            .replaceAll('per', '/')
-            .substring(0, b.length > 3 ? 3 : b.length);
-        return (_unitRank[aKey] ?? 999).compareTo(_unitRank[bKey] ?? 999);
-      });
+    // 1. Parse numeric input once per render pass
+    final double? inputValue = double.tryParse(_inputController.text.trim());
+
+    // 2. Instantiate Quantity object ONCE using quantify
+    final Q? quantity = inputValue != null
+        ? widget.createQuantity(inputValue, _selectedUnit.unit)
+        : null;
 
     return CupertinoPageScaffold(
       backgroundColor: currentTheme.scaffoldBackgroundColor,
@@ -633,7 +507,6 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header Title aligned to the left with a 15px margin
             Padding(
               padding: const EdgeInsets.only(
                 left: 15.0,
@@ -659,21 +532,31 @@ class _BaseConverterPageState extends State<BaseConverterPage> {
                   mainAxisSpacing: 10,
                   childAspectRatio: 1.35,
                 ),
-                itemCount: sortedUnits.length,
+                itemCount: _displayUnits.length,
                 itemBuilder: (context, index) {
-                  final unit = sortedUnits[index];
-                  final rawValue = allConversions[unit] ?? '';
-                  final formattedValue = _formatValue(rawValue);
+                  final UnitInfo<U> unitInfo = _displayUnits[index];
+
+                  String formattedValue = '';
+                  String rawValue = '';
+
+                  if (quantity != null) {
+                    final double calculated = widget.evaluateUnit(
+                      quantity,
+                      unitInfo.unit,
+                    );
+                    formattedValue = _formatNumericValue(calculated);
+                    rawValue = calculated.toString();
+                  }
+
                   return _buildUnitCard(
                     context,
-                    unit,
+                    unitInfo,
                     formattedValue,
                     rawValue,
                   );
                 },
               ),
             ),
-            // Pinned Bottom Panel
             _buildBottomPanel(),
           ],
         ),

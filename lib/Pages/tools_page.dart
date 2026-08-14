@@ -143,60 +143,62 @@ class ToolsGridContent extends StatelessWidget {
         page = const LengthConverterPage();
         break;
       case 'Area':
-        page = const AreaConverterPage();
+        // page = const AreaConverterPage();
         break;
       case 'Volume':
         page = const VolumeConverterPage();
         break;
       case 'Temperature':
-        page = const TemperatureConverterPage();
+        // page = const TemperatureConverterPage();
         break;
       case 'Speed':
-        page = const SpeedConverterPage();
+        // page = const SpeedConverterPage();
         break;
       case 'Time':
-        page = const TimeConverterPage();
+        // page = const TimeConverterPage();
         break;
       case 'Pressure':
-        page = const PressureConverterPage();
+        // page = const PressureConverterPage();
         break;
       case 'Power':
-        page = const PowerConverterPage();
+        // page = const PowerConverterPage();
         break;
       case 'Data':
-        page = const DataConverterPage();
+        // page = const DataConverterPage();
         break;
       case 'Angle':
-        page = const AngleConverterPage();
+        // page = const AngleConverterPage();
         break;
       case 'Currency':
-        page = const CurrencyConverterPage();
+        // page = const CurrencyConverterPage();
         break;
       case 'Fuel':
-        page = const FuelConverterPage();
+        // page = const FuelConverterPage();
         break;
       case 'Frequency':
-        page = const FrequencyConverterPage();
+        // page = const FrequencyConverterPage();
         break;
       case 'Storage':
         // page = const StorageConverterPage();
-        return; // Storage page commented out as per original
+        return;
       case 'Force':
-        page = const ForceConverterPage();
+        // page = const ForceConverterPage();
         break;
       case 'Sound':
-        page = const SoundConverterPage();
+        // page = const SoundConverterPage();
         break;
       case 'Illuminance':
-        page = const IlluminanceConverterPage();
+        // page = const IlluminanceConverterPage();
         break;
       default:
         return;
     }
+    if (page == null) return;
+    final targetPage = page;
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => page!,
+        pageBuilder: (context, animation, secondaryAnimation) => targetPage,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
