@@ -143,13 +143,13 @@ class ToolsGridContent extends StatelessWidget {
         page = const LengthConverterPage();
         break;
       case 'Area':
-        // page = const AreaConverterPage();
+        page = const AreaConverterPage();
         break;
       case 'Volume':
         page = const VolumeConverterPage();
         break;
       case 'Temperature':
-        // page = const TemperatureConverterPage();
+        page = const TemperatureConverterPage();
         break;
       case 'Speed':
         // page = const SpeedConverterPage();
@@ -161,7 +161,7 @@ class ToolsGridContent extends StatelessWidget {
         // page = const PressureConverterPage();
         break;
       case 'Power':
-        // page = const PowerConverterPage();
+        page = const PowerConverterPage();
         break;
       case 'Data':
         // page = const DataConverterPage();

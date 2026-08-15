@@ -1,57 +1,76 @@
-// import 'package:cupertino_ui/cupertino_ui.dart';
-// import '../base_converter_page.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:quantify/quantify.dart';
+import '../../models/units_info.dart';
+import '../base_converter_page.dart';
 
-// class AreaConverterPage extends StatelessWidget {
-//   const AreaConverterPage({super.key});
+class AreaConverterPage extends StatelessWidget {
+  const AreaConverterPage({super.key});
 
-//   // Available units for conversion
-//   static final List<String> _units = [
-//     'Square Meters',
-//     'Square Kilometers',
-//     'Square Centimeters',
-//     'Square Millimeters',
-//     'Square Miles',
-//     'Square Yards',
-//     'Square Feet',
-//     'Square Inches',
-//     'Hectares',
-//     'Acres'
-//   ];
+  static const List<UnitInfo<AreaUnit>> _units = [
+    UnitInfo(
+      unit: AreaUnit.squareMillimeter,
+      displayName: 'Square Millimeters',
+      symbol: 'mm²',
+      rank: 1,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareCentimeter,
+      displayName: 'Square Centimeters',
+      symbol: 'cm²',
+      rank: 2,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareMeter,
+      displayName: 'Square Meters',
+      symbol: 'm²',
+      rank: 3,
+    ),
+    UnitInfo(
+      unit: AreaUnit.hectare,
+      displayName: 'Hectares',
+      symbol: 'ha',
+      rank: 4,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareKilometer,
+      displayName: 'Square Kilometers',
+      symbol: 'km²',
+      rank: 5,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareInch,
+      displayName: 'Square Inches',
+      symbol: 'in²',
+      rank: 6,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareFoot,
+      displayName: 'Square Feet',
+      symbol: 'ft²',
+      rank: 7,
+    ),
+    UnitInfo(
+      unit: AreaUnit.squareYard,
+      displayName: 'Square Yards',
+      symbol: 'yd²',
+      rank: 8,
+    ),
+    UnitInfo(unit: AreaUnit.acre, displayName: 'Acres', symbol: 'ac', rank: 9),
+    UnitInfo(
+      unit: AreaUnit.squareMile,
+      displayName: 'Square Miles',
+      symbol: 'mi²',
+      rank: 10,
+    ),
+  ];
 
-//   // Conversion rates based on 1 unit = X Square Meters
-//   static final Map<String, double> _conversionRatesFromSquareMeters = {
-//     'Square Meters': 1.0,
-//     'Square Kilometers': 1000000.0,
-//     'Square Centimeters': 0.0001,
-//     'Square Millimeters': 0.000001,
-//     'Square Miles': 2589988.11,
-//     'Square Yards': 0.836127,
-//     'Square Feet': 0.092903,
-//     'Square Inches': 0.00064516,
-//     'Hectares': 10000.0,
-//     'Acres': 4046.86
-//   };
-
-//   String _handleConversion(String input, String fromUnit, String toUnit) {
-//     try {
-//       double value = double.parse(input);
-//       double valueInSquareMeters =
-//           value * _conversionRatesFromSquareMeters[fromUnit]!;
-//       double result =
-//           valueInSquareMeters / _conversionRatesFromSquareMeters[toUnit]!;
-//       return result.toStringAsFixed(6);
-//     } catch (e) {
-//       return 'Error';
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return BaseConverterPage(
-//       title: 'Area Converter',
-//       units: _units,
-//       conversionRates: _conversionRatesFromSquareMeters,
-//       onConvert: _handleConversion,
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return BaseConverterPage<AreaUnit, Area>(
+      title: 'Area Converter',
+      units: _units,
+      createQuantity: (val, unit) => Area(val, unit),
+      evaluateUnit: (qty, targetUnit) => qty.getValue(targetUnit),
+    );
+  }
+}
