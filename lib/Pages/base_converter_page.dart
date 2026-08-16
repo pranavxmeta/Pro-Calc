@@ -3,8 +3,8 @@ import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/calculation_history.dart';
-import '../models/units_info.dart';
+import '../history/model/calculation_history.dart';
+import '../unit/model/units_info.dart';
 import 'history_page.dart';
 import 'package:intl/intl.dart';
 

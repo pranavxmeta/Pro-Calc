@@ -4,7 +4,7 @@ import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../models/calculation_history.dart';
+import '../history/model/calculation_history.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart' hide ThemeMode;

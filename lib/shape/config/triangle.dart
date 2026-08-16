@@ -1,20 +1,22 @@
 import 'package:material_ui/material_ui.dart';
-import '../base_shape_page.dart';
+import '../../Pages/base_shape_page.dart';
 
-class CircleShapePage extends StatelessWidget {
-  const CircleShapePage({super.key});
+class TriangleShapePage extends StatelessWidget {
+  const TriangleShapePage({super.key});
 
-  static const String title = 'Circle Calculator';
-  static const String shapeType = 'Circle';
+  static const String title = 'Triangle Calculator';
+  static const String shapeType = 'Triangle';
   static const List<String> parameters = [
-    'Radius',
-    'Diameter',
+    'Base',
+    'Height',
+    'Side A',
+    'Side B',
     'Area',
-    'Circumference'
+    'Perimeter',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
-    'Radius': [
+    'Base': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -22,7 +24,23 @@ class CircleShapePage extends StatelessWidget {
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
     ],
-    'Diameter': [
+    'Height': [
+      {'unit': 'm', 'factor': 1.0},
+      {'unit': 'cm', 'factor': 100.0},
+      {'unit': 'km', 'factor': 0.001},
+      {'unit': 'ft', 'factor': 3.28084},
+      {'unit': 'in', 'factor': 39.3701},
+      {'unit': 'mi', 'factor': 0.000621371},
+    ],
+    'Side A': [
+      {'unit': 'm', 'factor': 1.0},
+      {'unit': 'cm', 'factor': 100.0},
+      {'unit': 'km', 'factor': 0.001},
+      {'unit': 'ft', 'factor': 3.28084},
+      {'unit': 'in', 'factor': 39.3701},
+      {'unit': 'mi', 'factor': 0.000621371},
+    ],
+    'Side B': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -38,7 +56,7 @@ class CircleShapePage extends StatelessWidget {
       {'unit': 'in²', 'factor': 1550.0},
       {'unit': 'acre', 'factor': 0.000247105},
     ],
-    'Circumference': [
+    'Perimeter': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},

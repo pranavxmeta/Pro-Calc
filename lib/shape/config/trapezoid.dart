@@ -1,22 +1,31 @@
 import 'package:material_ui/material_ui.dart';
-import '../base_shape_page.dart';
+import '../../Pages/base_shape_page.dart';
 
-class TriangleShapePage extends StatelessWidget {
-  const TriangleShapePage({super.key});
+class TrapezoidShapePage extends StatelessWidget {
+  const TrapezoidShapePage({super.key});
 
-  static const String title = 'Triangle Calculator';
-  static const String shapeType = 'Triangle';
+  static const String title = 'Trapezoid Calculator';
+  static const String shapeType = 'Trapezoid';
   static const List<String> parameters = [
-    'Base',
+    'Base A',
+    'Base B',
     'Height',
-    'Side A',
-    'Side B',
+    'Side C',
+    'Side D',
     'Area',
-    'Perimeter'
+    'Perimeter',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
-    'Base': [
+    'Base A': [
+      {'unit': 'm', 'factor': 1.0},
+      {'unit': 'cm', 'factor': 100.0},
+      {'unit': 'km', 'factor': 0.001},
+      {'unit': 'ft', 'factor': 3.28084},
+      {'unit': 'in', 'factor': 39.3701},
+      {'unit': 'mi', 'factor': 0.000621371},
+    ],
+    'Base B': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -32,7 +41,7 @@ class TriangleShapePage extends StatelessWidget {
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
     ],
-    'Side A': [
+    'Side C': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -40,7 +49,7 @@ class TriangleShapePage extends StatelessWidget {
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
     ],
-    'Side B': [
+    'Side D': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},

@@ -1,5 +1,5 @@
 import 'package:material_ui/material_ui.dart';
-import '../base_shape_page.dart';
+import '../../Pages/base_shape_page.dart';
 
 class SquareShapePage extends StatelessWidget {
   const SquareShapePage({super.key});
@@ -10,7 +10,7 @@ class SquareShapePage extends StatelessWidget {
     'Side',
     'Area',
     'Perimeter',
-    'Diagonal'
+    'Diagonal',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {

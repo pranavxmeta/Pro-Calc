@@ -1,23 +1,20 @@
 import 'package:material_ui/material_ui.dart';
-import '../base_shape_page.dart';
+import '../../Pages/base_shape_page.dart';
 
-class TrapezoidShapePage extends StatelessWidget {
-  const TrapezoidShapePage({super.key});
+class CircleShapePage extends StatelessWidget {
+  const CircleShapePage({super.key});
 
-  static const String title = 'Trapezoid Calculator';
-  static const String shapeType = 'Trapezoid';
+  static const String title = 'Circle Calculator';
+  static const String shapeType = 'Circle';
   static const List<String> parameters = [
-    'Base A',
-    'Base B',
-    'Height',
-    'Side C',
-    'Side D',
+    'Radius',
+    'Diameter',
     'Area',
-    'Perimeter'
+    'Circumference',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
-    'Base A': [
+    'Radius': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -25,31 +22,7 @@ class TrapezoidShapePage extends StatelessWidget {
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
     ],
-    'Base B': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Height': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side C': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side D': [
+    'Diameter': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -65,7 +38,7 @@ class TrapezoidShapePage extends StatelessWidget {
       {'unit': 'in²', 'factor': 1550.0},
       {'unit': 'acre', 'factor': 0.000247105},
     ],
-    'Perimeter': [
+    'Circumference': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},

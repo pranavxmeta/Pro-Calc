@@ -1,5 +1,5 @@
 import 'package:material_ui/material_ui.dart';
-import '../base_shape_page.dart';
+import '../../Pages/base_shape_page.dart';
 
 class RectangleShapePage extends StatelessWidget {
   const RectangleShapePage({super.key});
@@ -12,7 +12,7 @@ class RectangleShapePage extends StatelessWidget {
     'Height',
     'Area',
     'Perimeter',
-    'Volume'
+    'Volume',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
