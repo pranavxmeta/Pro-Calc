@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/calculation_history.dart';
 import '../models/units_info.dart';
 import 'history_page.dart';
+import 'package:intl/intl.dart';
 
 class BaseConverterPage<U extends Enum, Q> extends StatefulWidget {
   final String title;
@@ -56,40 +57,12 @@ class _BaseConverterPageState<U extends Enum, Q>
           ..sort((a, b) => a.rank.compareTo(b.rank));
   }
 
-  // Fast math string formatting
-  static const Map<String, String> _superscriptMap = {
-    '-': '⁻',
-    '0': '⁰',
-    '1': '¹',
-    '2': '²',
-    '3': '³',
-    '4': '⁴',
-    '5': '⁵',
-    '6': '⁶',
-    '7': '⁷',
-    '8': '⁸',
-    '9': '⁹',
-    '+': '⁺',
-  };
-
   String _formatNumericValue(double value) {
-    if (value == 0.0) return '0.000';
-
-    final double absVal = value.abs();
-    if (absVal >= 100000.0 || (absVal > 0.0 && absVal < 0.001)) {
-      final String expStr = value.toStringAsExponential(3);
-      final List<String> parts = expStr.split('e');
-      if (parts.length == 2) {
-        final String base = parts[0];
-        final String exponent = parts[1]
-            .split('')
-            .map((char) => _superscriptMap[char] ?? char)
-            .join('');
-        return '$base × 10$exponent';
-      }
-      return expStr;
-    }
-    return value.toStringAsFixed(3);
+    final abs = value.abs();
+    return (abs >= 1e5 || (abs > 0 && abs < 1e-3)
+            ? NumberFormat('0.000 E0')
+            : NumberFormat('0.000'))
+        .format(value);
   }
 
   Future<void> _copyToClipboard(String text) async {

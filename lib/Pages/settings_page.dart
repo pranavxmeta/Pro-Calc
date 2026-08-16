@@ -1,22 +1,136 @@
-import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'utils_theme_provider.dart'; // Use theme provider
-import 'utils_settings_provider.dart'; // Use settings provider
+import 'utils_theme_provider.dart';
+import 'utils_settings_provider.dart';
+
+/// Declarative data model for settings action buttons.
+class SettingsActionItem {
+  final Widget icon;
+  final String label;
+  final VoidCallback? onPressed;
+  final Color? backgroundColor;
+  final Color? labelColor;
+
+  const SettingsActionItem({
+    required this.icon,
+    required this.label,
+    this.onPressed,
+    this.backgroundColor,
+    this.labelColor,
+  });
+}
 
 class SettingsModalContent extends ConsumerWidget {
   final VoidCallback onClose;
 
   const SettingsModalContent({super.key, required this.onClose});
 
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(themeProvider);
     final settingsState = ref.watch(settingsProvider);
     final currentTheme = CupertinoTheme.of(context);
-    final themeNotifier = ref.read(themeProvider.notifier);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final isDarkMode = themeState.themeMode == ThemeMode.dark;
+
+    // Data-driven list of 6 action buttons in the row
+    final List<SettingsActionItem> actionItems = [
+      // 1. Theme Toggle Button
+      SettingsActionItem(
+        icon: Icon(
+          isDarkMode ? CupertinoIcons.sun_max_fill : CupertinoIcons.moon_fill,
+          color: isDarkMode
+              ? CupertinoColors.systemYellow
+              : CupertinoColors.black,
+          size: 22,
+        ),
+        label: isDarkMode ? 'Light' : 'Dark',
+        backgroundColor: isDarkMode
+            ? CupertinoColors.black
+            : CupertinoColors.systemGrey5,
+        labelColor: isDarkMode
+            ? CupertinoColors.systemYellow
+            : CupertinoColors.black,
+        onPressed: () {
+          ref
+              .read(themeProvider.notifier)
+              .setThemeMode(
+                isDarkMode ? ThemeMode.light : ThemeMode.dark,
+                followSystem: false,
+              );
+        },
+      ),
+
+      // 2. Number Format Button (IN / US)
+      SettingsActionItem(
+        icon: Text(
+          settingsState.numberLocale == 'en_IN' ? 'IN' : 'US',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: CupertinoColors.activeBlue,
+          ),
+        ),
+        label: '# Format',
+        backgroundColor: CupertinoColors.systemGrey5,
+        labelColor: CupertinoColors.activeBlue,
+        onPressed: () =>
+            ref.read(settingsProvider.notifier).toggleNumberLocale(),
+      ),
+
+      // 3. Social Media (GitHub) - Replaced Dummy 3
+      SettingsActionItem(
+        icon: const FaIcon(
+          FontAwesomeIcons.github,
+          color: CupertinoColors.activeBlue,
+          size: 22,
+        ),
+        label: 'GitHub',
+        backgroundColor: currentTheme.barBackgroundColor,
+        labelColor: CupertinoColors.activeBlue,
+        onPressed: () => _launchUrl('https://github.com/pranavxmeta/Pro-Calc'),
+      ),
+
+      // 4. Dummy 1 (Alerts/Notifications)
+      const SettingsActionItem(
+        icon: Icon(
+          CupertinoIcons.bell_fill,
+          color: CupertinoColors.systemGrey3,
+          size: 22,
+        ),
+        label: 'Alerts',
+      ),
+
+      // 5. Dummy 2 (Profile)
+      const SettingsActionItem(
+        icon: Icon(
+          CupertinoIcons.person_fill,
+          color: CupertinoColors.systemGrey3,
+          size: 22,
+        ),
+        label: 'Profile',
+      ),
+
+      // 6. Dummy 3 (General Settings)
+      const SettingsActionItem(
+        icon: Icon(
+          CupertinoIcons.gear_solid,
+          color: CupertinoColors.systemGrey3,
+          size: 22,
+        ),
+        label: 'General',
+      ),
+    ];
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.3,
@@ -45,8 +159,6 @@ class SettingsModalContent extends ConsumerWidget {
               vertical: 10.0,
             ),
             child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.start, // Fixed typo from .start
               children: [
                 Text(
                   'Settings',
@@ -55,91 +167,46 @@ class SettingsModalContent extends ConsumerWidget {
               ],
             ),
           ),
-          // Settings List
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               children: [
-                // Horizontal Row containing the Theme Toggle and 3 Dummy Buttons
+                // 6 Action Buttons in a horizontal single-scroll row
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0, top: 8.0),
-                  child: Row(
-                    mainAxisAlignment: .start,
-                    crossAxisAlignment: .start,
-                    children: [
-                      // Active Theme Toggle Button
-                      _buildThemeButton(
-                        context: context,
-                        isDarkMode: themeState.themeMode == ThemeMode.dark,
-                        onPressed: () {
-                          themeNotifier.setThemeMode(
-                            themeState.themeMode == ThemeMode.dark
-                                ? ThemeMode.light
-                                : ThemeMode.dark,
-                            followSystem: false,
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 16),
-                      // Dummy Button 1
-                      _buildDummyButton(
-                        context: context,
-                        icon: CupertinoIcons.bell_fill,
-                        label: "Dummy 1",
-                      ),
-                      const SizedBox(width: 16),
-                      // Dummy Button 2
-                      _buildDummyButton(
-                        context: context,
-                        icon: CupertinoIcons.person_fill,
-                        label: "Dummy 2",
-                      ),
-                      const SizedBox(width: 16),
-                      // Dummy Button 3
-                      _buildDummyButton(
-                        context: context,
-                        icon: CupertinoIcons.gear_solid,
-                        label: "Dummy 3",
-                      ),
-                    ],
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        for (int i = 0; i < actionItems.length; i++) ...[
+                          _SettingsActionButton(item: actionItems[i]),
+                          if (i < actionItems.length - 1)
+                            const SizedBox(width: 14),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-                // Social Media Links
+
+                // Footer Section
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        color: currentTheme.primaryColor.withValues(alpha: 0.2),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () =>
+                          _launchUrl('https://pub.dev/packages/exath_engine'),
+                      child: const Text(
+                        'Powered by Exath Engine',
+                        style: TextStyle(
+                          decoration: TextDecoration.underline,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: CupertinoColors.activeBlue,
+                        ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () => launchUrl(
-                              Uri.parse(
-                                "https://pub.dev/packages/exath_engine",
-                              ),
-                            ),
-                            child: const Text(
-                              "Powered by Exath Engine",
-                              style: TextStyle(
-                                decoration: TextDecoration.underline,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: CupertinoColors.activeBlue,
-                              ),
-                            ),
-                          ),
-                          _buildSocialButton(
-                            context: context,
-                            icon: FontAwesomeIcons.github,
-                            url: "https://github.com/pranavxmeta/Pro-Calc",
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -149,119 +216,52 @@ class SettingsModalContent extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildThemeButton({
-    required BuildContext context,
-    required bool isDarkMode,
-    required VoidCallback onPressed,
-  }) {
-    // 1. Determine icon and label based on current mode
-    final IconData icon = isDarkMode
-        ? CupertinoIcons.sun_max_fill
-        : CupertinoIcons.moon_fill;
-    final String label = isDarkMode ? "Light" : "Dark";
+/// Unified button component for all settings action buttons.
+class _SettingsActionButton extends StatelessWidget {
+  final SettingsActionItem item;
 
-    // 2. Set colors based on active mode:
-    // - Dark Mode active: Sun filled yellow, background black
-    // - Light Mode active: Moon black, background light grey
-    final Color backgroundColor = isDarkMode
-        ? CupertinoColors.black
-        : CupertinoColors.systemGrey5;
-    final Color iconColor = isDarkMode
-        ? CupertinoColors.systemYellow
-        : CupertinoColors.black;
-    final Color labelColor = isDarkMode
-        ? CupertinoColors.systemYellow
-        : CupertinoColors.black;
+  const _SettingsActionButton({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = item.backgroundColor ?? CupertinoColors.systemGrey6;
+    final fgColor = item.labelColor ?? CupertinoColors.systemGrey2;
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: onPressed,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: .circular(25.0),
+      onPressed: item.onPressed,
+      child: SizedBox(
+        width: 56,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(24.0),
+              ),
+              child: item.icon,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, color: labelColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDummyButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-  }) {
-    // Standard light grey styling for future buttons
-    final Color backgroundColor = CupertinoColors.systemGrey6;
-    final Color iconColor = CupertinoColors.systemGrey3;
-    final Color labelColor = CupertinoColors.systemGrey2;
-
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: () {
-        // Handle action later
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: .circular(25.0),
+            const SizedBox(height: 6),
+            Text(
+              item.label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: fgColor,
+              ),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, color: labelColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required BuildContext context,
-    required FaIconData icon,
-    required String url,
-  }) {
-    final currentTheme = CupertinoTheme.of(context);
-
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: () async {
-        final Uri uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          debugPrint('Could not launch $url');
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: currentTheme.barBackgroundColor,
-          shape: BoxShape.circle,
+          ],
         ),
-        child: FaIcon(icon, color: CupertinoColors.activeBlue, size: 24),
       ),
     );
   }

@@ -43,10 +43,16 @@ class _CalcPageState extends ConsumerState<CalcPage>
 
   bool isDarkThemeEnabled = false;
 
-  final NumberFormat _numberFormat = NumberFormat(
-    "#,##0.########",
-    "en_US",
-  ); // Flexible decimal places
+  // Replace static NumberFormat with dynamic getter
+  NumberFormat get _numberFormat {
+    final locale = ref.watch(settingsProvider).numberLocale;
+    return NumberFormat.decimalPattern(locale)..maximumFractionDigits = 5;
+  }
+
+  // final NumberFormat _numberFormat = NumberFormat(
+  //   "#,##0.########",
+  //   "en_IN",
+  // ); // Flexible decimal places
   String _rawExpression = ''; // Store unformatted expression
 
   // --- Constants ---
@@ -318,13 +324,16 @@ class _CalcPageState extends ConsumerState<CalcPage>
       int openCount = '('.allMatches(expression).length;
       int closeCount = ')'.allMatches(expression).length;
       bool unbalancedParens = openCount != closeCount;
-      bool hasOperator = RegExp(r'[+\-*/×÷%^]').hasMatch(expression);
+      bool hasOperator = RegExp(r'[+\-*/×÷%^E]').hasMatch(expression);
       bool hasFunction = RegExp(r'(sin|cos|tan|log|ln|√)').hasMatch(expression);
+      // ADD these two checks:
+      bool endsWithE = RegExp(r'E[+-]?$').hasMatch(expression);
 
       // Don't show answer for incomplete expressions
       if (!finalEvaluation &&
           (!hasOperator && !hasFunction ||
               endsWithOp ||
+              endsWithE ||
               endsWithOpenParen ||
               unbalancedParens)) {
         debugPrint(
@@ -348,7 +357,17 @@ class _CalcPageState extends ConsumerState<CalcPage>
       // handles angle mode (DEG/RAD), the constants π and e, trig & inverse
       // trig, sqrt, ln, log (base-10), factorial (!) and powers (^), so the
       // old SINR/COSR variants and manual degree conversion are gone.
-      final String preparedExpression = expression
+      String processed = expression.replaceAllMapped(
+        RegExp(r'(\d+(?:\.\d+)?)\s*E\s*([+-]?\d+)'),
+        (m) => '(${m[1]} * 10^(${m[2]}))',
+      );
+
+      // 2. Shorthand notation: E5 or E-3 -> (10^(5))
+      processed = processed.replaceAllMapped(
+        RegExp(r'(?<![\d.])E\s*([+-]?\d+)'),
+        (m) => '(10^(${m[1]}))',
+      );
+      final String preparedExpression = processed
           .replaceAll(',', '')
           .replaceAll('×', '*')
           .replaceAll('÷', '/')
@@ -535,6 +554,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
               .replaceAll('÷', '/')
               .replaceAll('π', '3.141592653589793')
               .replaceAllMapped(
+                RegExp(r'(\d+(?:\.\d+)?)[E]([+-]?\d+)'),
+                (match) => '(${match[1]} * 10^(${match[2]}))',
+              )
+              .replaceAllMapped(
                 RegExp(r'(?<![\d.])e'),
                 (m) => '2.718281828459045',
               );
@@ -690,7 +713,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
       case '-':
       case '×':
       case '÷':
-      case '^':
+
         // If last action was evaluation, use the answer as the base for next operation
         if (_lastActionWasEval &&
             answer != "Error" &&
@@ -867,6 +890,46 @@ class _CalcPageState extends ConsumerState<CalcPage>
           } else {
             buffer.write(currentText);
             buffer.write('log(');
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _rawExpression = buffer.toString();
+            _inputController.text = formatExpression(_rawExpression);
+            _inputController.selection = TextSelection.collapsed(
+              offset: _inputController.text.length,
+            );
+            debugPrint("Updated log expression: '$_rawExpression'");
+            evaluateExpression();
+          });
+        }
+        return;
+
+      case '^':
+        String currentText = _rawExpression;
+        final buffer = StringBuffer();
+        debugPrint("Log button pressed. Current state: isShift=$isShift");
+
+        if (isShift) {
+          // Natural log (ln)
+          if (currentText.isNotEmpty &&
+              endsWithNumberOrParenOrConst.hasMatch(currentText)) {
+            buffer.write(currentText);
+            buffer.write('E');
+          } else {
+            buffer.write(currentText);
+            buffer.write('E');
+          }
+        } else {
+          // Common log (log10)
+          if (currentText.isNotEmpty &&
+              endsWithNumberOrParenOrConst.hasMatch(currentText)) {
+            buffer.write(currentText);
+            buffer.write('^');
+          } else {
+            buffer.write(currentText);
+            buffer.write('^');
           }
         }
 
@@ -1770,7 +1833,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
       content = Icon(FluentIcons.backspace_24_filled, size: 28, color: fgColor);
     } else {
       String displayText = (text == 'DEG') ? (isDeg ? 'DEG' : 'RAD') : text;
-      if (isShift && {'sin', 'cos', 'tan', 'log'}.contains(displayText)) {
+      if (isShift && {'sin', 'cos', 'tan', 'log', '^'}.contains(displayText)) {
         switch (displayText) {
           case 'sin':
             displayText = 'sin⁻¹';
@@ -1783,6 +1846,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
             break;
           case 'log':
             displayText = 'ln';
+            break;
+          case '^':
+            displayText = 'E';
             break;
         }
       }
