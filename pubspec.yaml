@@ -34,6 +34,7 @@ dependencies:
   cupertino_ui: any
   material_ui: any
   quantify: ^0.21.0
+  package_info_plus: ^10.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -43,6 +44,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3 # Added version constraint - check pub.dev for the latest
   test_api: ^0.7.4 # Moved from dependencies
+  rename_app: ^1.6.6
 
 
 flutter_native_splash:

@@ -49,10 +49,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
     return NumberFormat.decimalPattern(locale)..maximumFractionDigits = 5;
   }
 
-  // final NumberFormat _numberFormat = NumberFormat(
-  //   "#,##0.########",
-  //   "en_IN",
-  // ); // Flexible decimal places
   String _rawExpression = ''; // Store unformatted expression
 
   // --- Constants ---
@@ -74,45 +70,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
   final List<CalculationHistory> history = [];
   final int maxHistoryEntries = 100;
   static const _historyKey = 'calculator_history_v8'; // Increment version
-
-  // --- Button Layout ---
-  // final List<String> stringList = [
-  //   'shft',
-  //   'X',
-  //   'Y',
-  //   'DEG',
-  //   'AC',
-  //   'sin',
-  //   'cos',
-  //   'tan',
-  //   'π',
-  //   'del',
-  //   'e',
-  //   '(',
-  //   ')',
-  //   '%',
-  //   '÷',
-  //   '!',
-  //   '7',
-  //   '8',
-  //   '9',
-  //   '×',
-  //   '^',
-  //   '4',
-  //   '5',
-  //   '6',
-  //   '-',
-  //   '√',
-  //   '1',
-  //   '2',
-  //   '3',
-  //   '+',
-  //   'log',
-  //   '00',
-  //   '0',
-  //   '.',
-  //   '=',
-  // ];
 
   List<String> get stringList {
     final settingsState = ref.watch(settingsProvider);

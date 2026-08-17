@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:material_ui/material_ui.dart' hide ThemeMode;
 import 'package:url_launcher/url_launcher.dart';
 import 'utils_theme_provider.dart';
 import 'utils_settings_provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Declarative data model for settings action buttons.
 class SettingsActionItem {
@@ -208,6 +210,39 @@ class SettingsModalContent extends ConsumerWidget {
                       ),
                     ),
                   ),
+                ),
+                FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      final packageInfo = snapshot.data!;
+
+                      final version = packageInfo.version;
+
+                      return Center(
+                        child: Padding(
+                          padding: .all(8),
+                          child: Row(
+                            mainAxisAlignment: .center,
+                            children: [
+                              Text('Pro Calc'),
+                              const SizedBox(width: 10),
+                              Text('v$version'),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    // Loading placeholder
+                    return Material(
+                      child: const ListTile(
+                        leading: Icon(Icons.info_outline),
+                        title: Text('App Version'),
+                        subtitle: Text('Loading...'),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
