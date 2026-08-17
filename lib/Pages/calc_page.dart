@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart' hide ThemeMode;
 import 'tools_page.dart';
+import '../apptoast/apptoast.dart';
 
 import 'history_page.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -387,9 +388,11 @@ class _CalcPageState extends ConsumerState<CalcPage>
             answer != 'Error' &&
             !answer.contains('Infinity')) {
           Clipboard.setData(ClipboardData(text: answer));
-          showInfoSnackbar(context, 'Answer copied to clipboard');
+          // AppToast.info(context, 'Answer copied to clipboard');
+          context.appToast('Answer copied to clipboard', type: ToastType.info);
         } else {
-          showErrorSnackbar(context, 'No valid answer to copy');
+          // AppToast.error(context, 'No valid answer to copy');
+          context.appToast('No valid answer to copy', type: ToastType.error);
         }
         return;
 
@@ -1296,12 +1299,17 @@ class _CalcPageState extends ConsumerState<CalcPage>
       if (!isValid || !mounted) {
         return;
       }
+      if (!context.mounted) {
+        return;
+      }
 
       // Get clipboard data
       final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
       String pastedText = clipboardData?.text?.trim() ?? '';
       if (pastedText.isEmpty) {
-        showOverlayMessage('Clipboard is empty');
+        if (mounted) {
+          context.appToast('Error accessing clipboard', type: ToastType.error);
+        }
         return;
       }
 
@@ -1361,21 +1369,29 @@ class _CalcPageState extends ConsumerState<CalcPage>
       });
 
       // Show success message
-      showOverlayMessage('Expression pasted');
+      if (mounted) {
+        // AppToast.success(context, 'Expression pasted');
+        context.appToast('Expression pasted', type: ToastType.success);
+      }
     } catch (e, stackTrace) {
-      debugPrint("Paste error: $e");
-      debugPrint("Stack trace: $stackTrace");
-      showOverlayMessage('Error pasting from clipboard');
+      debugPrint("Paste error: $e\n$stackTrace");
+      if (mounted) {
+        // AppToast.error(context, 'Error paste from clipboard');
+        context.appToast('Error paste from clipboard', type: ToastType.error);
+      }
     }
   }
 
   Future<bool> validateAndPasteClipboard(BuildContext context) async {
     try {
       final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (!context.mounted) return false;
       final pastedText = clipboardData?.text?.trim() ?? '';
 
       if (pastedText.isEmpty) {
-        showOverlayMessage('Clipboard is empty');
+        // AppToast.warning(context, 'Clipboard is empty');
+        context.appToast('Clipboard is empty', type: ToastType.warning);
+
         return false;
       }
 
@@ -1384,7 +1400,12 @@ class _CalcPageState extends ConsumerState<CalcPage>
         r'^[0-9,\.\+\-*/×÷%^()\s]*(sin|cos|tan|log|ln|sqrt|π|e|X|Y)?$',
       );
       if (!validChars.hasMatch(pastedText)) {
-        showOverlayMessage('Invalid characters in clipboard');
+        // AppToast.error(context, 'Invalid characters in clipboard');
+        context.appToast(
+          'Invalid characters in clipboard',
+          type: ToastType.error,
+        );
+
         return false;
       }
 
@@ -1397,7 +1418,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
 
       for (var pattern in invalidSequences) {
         if (pattern.hasMatch(pastedText)) {
-          showOverlayMessage('Invalid expression format');
+          // AppToast.error(context, 'Invalid expression format');
+          context.appToast('Invalid expression format', type: ToastType.error);
           return false;
         }
       }
@@ -1405,26 +1427,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
       return true;
     } catch (e) {
       debugPrint("Clipboard validation error: $e");
-      showOverlayMessage('Error accessing clipboard');
+      // AppToast.error(context, 'Error accessing clipboard');
+      context.appToast('Error accessing clipboard', type: ToastType.error);
+
       return false;
-    }
-  }
-
-  void showErrorSnackbar(BuildContext context, String message) {
-    debugPrint("Showing error overlay: $message");
-    if (mounted) {
-      showOverlayMessage(message);
-    } else {
-      debugPrint("Widget not mounted, overlay not shown");
-    }
-  }
-
-  void showInfoSnackbar(BuildContext context, String message) {
-    debugPrint("Showing info overlay: $message");
-    if (mounted) {
-      showOverlayMessage(message);
-    } else {
-      debugPrint("Widget not mounted, overlay not shown");
     }
   }
 
@@ -1465,79 +1471,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
     }
   }
 
-  // --- UI Building ---
-  // final Map<String, Color> buttonColors = {
-  //   'DEG': CupertinoColors.systemGreen.withOpacity(0.3),
-  //   'RAD': CupertinoColors.systemOrange.withOpacity(0.3),
-  //   'X': CupertinoColors.systemPurple.withOpacity(0.3),
-  //   'Y': CupertinoColors.systemTeal.withOpacity(0.3),
-  //   'shft': CupertinoColors.systemIndigo.withOpacity(0.4),
-  //   'sin': CupertinoColors.systemGrey5,
-  //   'cos': CupertinoColors.systemGrey5,
-  //   'tan': CupertinoColors.systemGrey5,
-  //   'log': CupertinoColors.systemGrey5,
-  //   '10ˣ': CupertinoColors.white,
-  //   '√': CupertinoColors.systemGrey5,
-  //   '(': CupertinoColors.systemGrey5,
-  //   ')': CupertinoColors.systemGrey5,
-  //   '%': CupertinoColors.systemGrey5,
-  //   '!': CupertinoColors.systemGrey5,
-  //   '^': CupertinoColors.systemGrey5,
-  //   'π': CupertinoColors.systemGrey5,
-  //   'e': CupertinoColors.systemGrey5,
-  //   'AC': CupertinoColors.systemRed.withOpacity(0.3),
-  //   'del': CupertinoColors.systemGrey5,
-  //   '=': CupertinoColors.systemBlue.withOpacity(0.5),
-  //   '+': CupertinoColors.systemGrey5,
-  //   '-': CupertinoColors.systemGrey5,
-  //   '×': CupertinoColors.systemGrey5,
-  //   '÷': CupertinoColors.systemGrey5,
-  //   '.': CupertinoColors.white,
-  //   '0': CupertinoColors.white,
-  //   '1': CupertinoColors.white,
-  //   '2': CupertinoColors.white,
-  //   '3': CupertinoColors.white,
-  //   '4': CupertinoColors.white,
-  //   '5': CupertinoColors.white,
-  //   '6': CupertinoColors.white,
-  //   '7': CupertinoColors.white,
-  //   '8': CupertinoColors.white,
-  //   '9': CupertinoColors.white,
-  //   'hist': CupertinoColors.systemGroupedBackground,
-  //   'unit': CupertinoColors.systemGroupedBackground,
-  //   'Settings': CupertinoColors.systemGroupedBackground,
-  //   'Calc': CupertinoColors.systemGroupedBackground,
-  //   'Copy': CupertinoColors.systemGroupedBackground,
-  //   'Paste': CupertinoColors.systemGroupedBackground,
-  // };
-
   Gradient getButtonColor(BuildContext context, String text) {
     final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
     switch (text) {
-      // case 'DEG':
-      // case 'RAD':
-      //   return isDeg
-      //       ? CupertinoColors.systemGreen.withValues(alpha: 0.3)
-      //       : CupertinoColors.systemOrange.withValues(alpha: 0.3);
-      // case 'X':
-      //   return isDarkMode
-      //       ? CupertinoColors.systemPurple.withValues(alpha: 0.6)
-      //       : CupertinoColors.systemPurple.withValues(alpha: 0.3);
-
-      // case 'Y':
-      //   return isDarkMode
-      //       ? CupertinoColors.systemTeal.withValues(alpha: 0.6)
-      //       : CupertinoColors.systemTeal.withValues(alpha: 0.3);
-
-      // case 'shft':
-      //   return isShift
-      //       ? CupertinoColors.systemIndigo.withValues(alpha: 0.4)
-      //       : CupertinoColors.systemIndigo.withValues(alpha: 0.3);
-      // case 'AC':
-      //   return isDarkMode
-      //       ? CupertinoColors.systemRed.withValues(alpha: 0.6)
-      //       : CupertinoColors.systemRed.withValues(alpha: 0.3);
-
       case '=':
         return const LinearGradient(
           begin: Alignment.centerLeft,
@@ -1875,7 +1811,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final safeAreaPadding = mediaQuery.padding;
     final effectiveScreenHeight =
         screenHeight - safeAreaPadding.top - safeAreaPadding.bottom;
-    final double btnSize = screenWidth * 0.125;
+    // final double btnSize = screenWidth * 0.125;
     if (_inputTextSizeAnimation is AlwaysStoppedAnimation) {
       _initializeAnimations();
     }
@@ -2415,37 +2351,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
         );
       },
     );
-  }
-
-  void showOverlayMessage(String message) {
-    final overlay = Navigator.of(context).overlay;
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: 20,
-        left: 32,
-        right: 32,
-        child: SafeArea(
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(20, 20, 20, 0.80),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Center(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay?.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
-    });
   }
 
   // Add this method to help debug cursor positioning issues

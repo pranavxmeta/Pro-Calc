@@ -78,7 +78,7 @@ class ToolsTabGridContent extends StatelessWidget {
               );
             } else {
               // Fallback for any tool that might not have a page defined yet
-              print('Tapped on: ${tool['name']}, but no page is defined.');
+              debugPrint('Tapped on: ${tool['name']}, but no page is defined.');
             }
           },
           child: Container(
