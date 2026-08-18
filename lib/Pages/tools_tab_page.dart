@@ -36,7 +36,7 @@ class ToolsTabGridContent extends StatelessWidget {
     // {'name': 'Mortgage', 'icon': FluentIcons.home_24_regular, 'page': const MortgagePage()},
     // {'name': 'Currency', 'icon': FluentIcons.money_24_regular, 'page': const CurrencyConverterPage()},
     {
-      'name': 'Discount',
+      'name': 'Notes',
       'icon': FluentIcons.tag_24_regular,
       'page': const NotesCalcPage(),
     },

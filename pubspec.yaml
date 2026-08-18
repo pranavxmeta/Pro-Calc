@@ -35,9 +35,15 @@ dependencies:
   material_ui: any
   quantify: ^0.21.0
   package_info_plus: ^10.2.1
+  drift: ^2.34.3
+  drift_flutter: ^0.3.1
+  path_provider: ^2.1.2
+  path: ^1.9.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  drift_dev: ^2.24.0             # Drift generator
+  build_runner: ^2.4.14
 
 
   flutter_native_splash: ^2.4.6
