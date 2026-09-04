@@ -1,0 +1,20 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+
+/// Enhanced enum binding visual identity directly to each toast variant.
+enum ToastType(final Color accentColor, final IconData icon) {
+  info(Color(0xFFFF9000), FluentIcons.info_24_filled),
+  success(Color(0xFF34C759), FluentIcons.checkmark_circle_24_filled),
+  warning(Color(0xFFFFCC00), FluentIcons.warning_24_filled),
+  error(Color(0xFFFF3B30), FluentIcons.dismiss_circle_24_filled);
+}
+
+/// Immutable data payload passed to the toast presenter.
+@immutable
+class const ToastPayload({
+  required final String message,
+  final ToastType type = ToastType.info,
+  final Duration duration = const Duration(milliseconds: 2400),
+  final IconData? customIcon,
+  final VoidCallback? onDismiss,
+});
