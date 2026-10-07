@@ -129,7 +129,7 @@ class const CalcButton({
         background: const LinearGradient(
           colors: [CupertinoColors.transparent, CupertinoColors.transparent],
         ),
-        borderColor: barBgColor,
+        borderColor: Color.fromRGBO(0, 0, 0, 0),
         borderWidth: 0.8,
         foregroundColor: themeTextColor,
         fontSize: 25.0,

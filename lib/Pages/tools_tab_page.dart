@@ -2,6 +2,7 @@
 
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:pro_calc/assistant/ui/assistant_sheet.dart';
 import 'package:pro_calc/normcalc/ui/normcalc_app.dart';
 
 // import 'calculators/mortgage_page.dart';
@@ -41,7 +42,15 @@ class ToolsTabGridContent extends StatelessWidget {
       'icon': FluentIcons.tag_24_regular,
       'page': const NotesListPage(),
     },
-    // {'name': 'Time Zone', 'icon': FluentIcons.globe_24_regular, 'page': const TimeZoneConverterPage()},
+    {
+      'name': 'AI Chat',
+      'icon':
+          FluentIcons.chat_sparkle_24_regular, // or FluentIcons.bot_24_regular
+      'page': const AssistantSheet(
+        modelUrl: 'https://huggingface.co/litert-community/SmolLM2-360M-Instruct/resolve/main/SmolLM2_360M_instruct.litertlm',
+      ),
+    },
+    // {'name': 'new chat', 'icon': FluentIcons.globe_24_regular, 'page': const TimeZoneConverterPage()},
     {
       'name': 'BMI',
       'icon': FluentIcons.person_24_regular,

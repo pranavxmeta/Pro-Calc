@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+
 import '../model/note_item.dart';
 import '../utils/math_evaluator.dart';
 
@@ -299,6 +300,27 @@ class NotesDatabase extends _$NotesDatabase {
         );
       }
     });
+  }
+
+  /// Extracts aggregated sheet documents for vector embedding and RAG indexing.
+  Future<List<({int sheetId, String title, String content})>>
+  getAllSheetsWithContent() async {
+    final sheets = await select(noteSheets).get();
+    final results = <({int sheetId, String title, String content})>[];
+
+    for (final sheet in sheets) {
+      final entries =
+          await (select(noteDocumentEntries)
+                ..where((t) => t.sheetId.equals(sheet.id))
+                ..orderBy([(t) => OrderingTerm.asc(t.lineIndex)]))
+              .get();
+      final body = entries
+          .map((e) => e.rawText.trim())
+          .where((t) => t.isNotEmpty)
+          .join('\n');
+      results.add((sheetId: sheet.id, title: sheet.title, content: body));
+    }
+    return results;
   }
 
   /// Deletes a sheet and its cascade lines

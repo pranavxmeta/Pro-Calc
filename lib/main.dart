@@ -10,12 +10,14 @@ import 'package:pro_calc/Pages/utils_theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exath_engine/exath_engine.dart';
 import 'package:pro_calc/calc/calc_page.dart';
+import 'package:flutter_edge_ai/flutter_edge_ai.dart';
+import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
 
 Future<void> initializeApp() async {
   try {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
+    await FlutterEdgeAi.initialize(inferenceEngines: const [LiteRtLmEngine()]);
     // if (Platform.isAndroid) {
     //   await FlutterDisplayMode.setHighRefreshRate();
     // }
