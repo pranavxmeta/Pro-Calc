@@ -6,12 +6,13 @@ import 'package:material_ui/material_ui.dart' hide ThemeMode;
 // import 'package:flutter_displaymode/flutter_displaymode.dart';
 // import 'package:pro_calc/Pages/calc_page.dart';
 
-import 'package:pro_calc/Pages/utils_theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exath_engine/exath_engine.dart';
 import 'package:pro_calc/calc/calc_page.dart';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
 import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
+
+import 'core/theme/app_theme.dart';
 
 Future<void> initializeApp() async {
   try {
@@ -94,6 +95,12 @@ class ProCalc extends ConsumerWidget {
         DefaultWidgetsLocalizations.delegate,
       ],
       theme: theme,
+      builder: (context, child) => Theme(
+        data: (effectiveThemeMode == ThemeMode.dark
+            ? AppTheme.dark
+            : AppTheme.light),
+        child: child ?? const SizedBox.shrink(),
+      ),
       debugShowCheckedModeBanner: false,
       title: 'Pro Calc',
       home: homeContent,

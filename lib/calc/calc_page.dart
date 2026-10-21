@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:pro_calc/settings/screen/settings_screen.dart';
+
 import '../core/widget/modal_sheet/model/ios_sheet_options.dart';
 import '../core/widget/modal_sheet/utils/ios_sheet_extension.dart';
 
@@ -12,7 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../history/model/calculation_history.dart';
 import '../Pages/history_page.dart';
-import '../Pages/settings_page.dart';
 import '../Pages/tools_page.dart';
 import '../Pages/utils_settings_provider.dart';
 
@@ -263,7 +264,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
   // --- Key Action Dispatcher ---
   void _onKeyPressed(String key) => switch (key) {
     'hist' => _showHistoryModal,
-    'Settings' => _showSettingsModal,
+    'Settings' => () => showSettingsModal(context),
     'unit' => _showToolsModal,
     'Copy' => () => CalcClipboard.copy(context, answer),
     'Paste' => _handlePaste,
@@ -621,21 +622,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
         height: MediaQuery.sizeOf(modalContext).height * 0.65,
         child: const SafeArea(top: false, child: ToolsPage(isModal: true)),
       ),
-    );
-  }
-
-  void _showSettingsModal() {
-    context.showIosSheet<void>(
-      options: const IosSheetOptions(
-        maxWidth: 460.0,
-        cornerRadius: 24.0,
-        showGrabber: true,
-        enableDrag: true,
-        surfaceColor: Color(0xD9F2F2F7),
-        barrierColor: Color(0x40000000),
-      ),
-      builder: (modalContext) =>
-          SettingsModalContent(onClose: () => Navigator.of(modalContext).pop()),
     );
   }
 

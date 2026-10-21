@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../core/widget/apptoast/apptoast.dart';
+import 'package:apptoast/apptoast.dart';
 
 /// Clipboard validation and transfer helper.
 final class CalcClipboard {
@@ -23,21 +23,20 @@ final class CalcClipboard {
 
     final text = data?.text?.trim() ?? '';
     if (text.isEmpty) {
-      context.appToast('Clipboard is empty', type: ToastType.warning);
+      AppToast.warning(context, 'Clipboard is empty');
+
       return null;
     }
 
     if (!_validChars.hasMatch(text)) {
-      context.appToast(
-        'Invalid characters in clipboard',
-        type: ToastType.error,
-      );
+      AppToast.error(context, 'Invalid characters in clipboard');
+
       return null;
     }
 
     for (final pattern in _invalidPatterns) {
       if (pattern.hasMatch(text)) {
-        context.appToast('Invalid expression format', type: ToastType.error);
+        AppToast.error(context, 'Invalid expression format');
         return null;
       }
     }
@@ -49,9 +48,9 @@ final class CalcClipboard {
     if (text.isNotEmpty && text != 'Error' && !text.contains('Infinity')) {
       await Clipboard.setData(ClipboardData(text: text));
       if (!context.mounted) return;
-      context.appToast('Answer copied to clipboard', type: ToastType.info);
+      AppToast.success(context, 'Answer copied to clipboard');
     } else {
-      context.appToast('No valid answer to copy', type: ToastType.error);
+      AppToast.error(context, 'No valid answer to copy');
     }
   }
 }
