@@ -1,7 +1,7 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'Export_Page_list/shape_page_list.dart';
+import '../feat/tool/Shape_Page/shape_page.dart';
 
 /// Screen hosting geometric shape calculation tools.
 ///

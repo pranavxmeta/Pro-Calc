@@ -1,46 +1,21 @@
 import 'package:material_ui/material_ui.dart';
-import '../../Pages/base_shape_page.dart';
 
-class TriangleShapePage extends StatelessWidget {
-  const TriangleShapePage({super.key});
+import '../../../Pages/base_shape_page.dart';
 
-  static const String title = 'Triangle Calculator';
-  static const String shapeType = 'Triangle';
+class SquareShapePage extends StatelessWidget {
+  const SquareShapePage({super.key});
+
+  static const String title = 'Square Calculator';
+  static const String shapeType = 'Square';
   static const List<String> parameters = [
-    'Base',
-    'Height',
-    'Side A',
-    'Side B',
+    'Side',
     'Area',
     'Perimeter',
+    'Diagonal',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
-    'Base': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Height': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side A': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side B': [
+    'Side': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -57,6 +32,14 @@ class TriangleShapePage extends StatelessWidget {
       {'unit': 'acre', 'factor': 0.000247105},
     ],
     'Perimeter': [
+      {'unit': 'm', 'factor': 1.0},
+      {'unit': 'cm', 'factor': 100.0},
+      {'unit': 'km', 'factor': 0.001},
+      {'unit': 'ft', 'factor': 3.28084},
+      {'unit': 'in', 'factor': 39.3701},
+      {'unit': 'mi', 'factor': 0.000621371},
+    ],
+    'Diagonal': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},

@@ -1,23 +1,23 @@
 import 'package:material_ui/material_ui.dart';
-import '../../Pages/base_shape_page.dart';
 
-class TrapezoidShapePage extends StatelessWidget {
-  const TrapezoidShapePage({super.key});
+import '../../../Pages/base_shape_page.dart';
 
-  static const String title = 'Trapezoid Calculator';
-  static const String shapeType = 'Trapezoid';
+class RectangleShapePage extends StatelessWidget {
+  const RectangleShapePage({super.key});
+
+  static const String title = 'Rectangle Calculator';
+  static const String shapeType = 'Rectangle';
   static const List<String> parameters = [
-    'Base A',
-    'Base B',
+    'Length',
+    'Width',
     'Height',
-    'Side C',
-    'Side D',
     'Area',
     'Perimeter',
+    'Volume',
   ];
 
   static const Map<String, List<Map<String, dynamic>>> unitOptions = {
-    'Base A': [
+    'Length': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -25,7 +25,7 @@ class TrapezoidShapePage extends StatelessWidget {
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
     ],
-    'Base B': [
+    'Width': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -34,22 +34,6 @@ class TrapezoidShapePage extends StatelessWidget {
       {'unit': 'mi', 'factor': 0.000621371},
     ],
     'Height': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side C': [
-      {'unit': 'm', 'factor': 1.0},
-      {'unit': 'cm', 'factor': 100.0},
-      {'unit': 'km', 'factor': 0.001},
-      {'unit': 'ft', 'factor': 3.28084},
-      {'unit': 'in', 'factor': 39.3701},
-      {'unit': 'mi', 'factor': 0.000621371},
-    ],
-    'Side D': [
       {'unit': 'm', 'factor': 1.0},
       {'unit': 'cm', 'factor': 100.0},
       {'unit': 'km', 'factor': 0.001},
@@ -72,6 +56,14 @@ class TrapezoidShapePage extends StatelessWidget {
       {'unit': 'ft', 'factor': 3.28084},
       {'unit': 'in', 'factor': 39.3701},
       {'unit': 'mi', 'factor': 0.000621371},
+    ],
+    'Volume': [
+      {'unit': 'm³', 'factor': 1.0},
+      {'unit': 'cm³', 'factor': 1000000.0},
+      {'unit': 'km³', 'factor': 0.000000001},
+      {'unit': 'ft³', 'factor': 35.3147},
+      {'unit': 'in³', 'factor': 61023.7},
+      {'unit': 'L', 'factor': 1000.0},
     ],
   };
 

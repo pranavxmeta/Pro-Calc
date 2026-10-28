@@ -5,7 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pro_calc/assistant/ui/assistant_sheet.dart';
 import 'package:pro_calc/normcalc/ui/normcalc_app.dart';
 
-import 'Tools_Page/tools_page.dart';
+import '../feat/tool/Tools_Page/tools_page.dart';
 
 /// Screen hosting utility calculation tools, AI assistant, and productivity apps.
 ///
