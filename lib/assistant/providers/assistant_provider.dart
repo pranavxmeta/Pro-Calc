@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../calc/utils/calc_evaluator.dart';
 import '../../notes/database/notes_database.dart';
 import '../models/assistant_state.dart';
 import '../services/edge_ai_service.dart';
@@ -17,7 +19,7 @@ class AssistantNotifier extends Notifier<AssistantState> {
       [
         AssistantMessage(
           'welcome',
-          'AI Assistant Ready (100% Offline Mode).\n• Tap "Select Model" to choose your local .litertlm file.\n• Ask word problems: "100 apples, give 38 to maria and 13 to jack"\n• Calculations are solved with exath_engine.',
+          'AI Assistant Ready (Gemma 4 E2B Engine).\n• Full Physics & Science: "what is 10 * earth gravity", "how much is earth rotation speed"\n• Combinatorics: "permutations of 5 pick 3"\n• Word Problems: "10 baskets with 5 apples each"\n• Calculations computed live via exath_engine.',
           false,
           DateTime.now(),
           null,
@@ -88,6 +90,43 @@ class AssistantNotifier extends Notifier<AssistantState> {
       await for (final chunk in stream) {
         currentResponse += chunk;
         _upsertMessage(botId, currentResponse);
+      }
+
+      // 1. Clean any leaked LaTeX formatting ($ markers, \text{}, \times)
+      currentResponse = currentResponse
+          .replaceAllMapped(RegExp(r'\\text\{([^}]+)\}'), (m) => m[1] ?? '')
+          .replaceAll(r'\times', '×')
+          .replaceAll(r'\div', '÷')
+          .replaceAll(r'$$', '')
+          .replaceAll(r'$', '')
+          .replaceAll(r'\{', '{')
+          .replaceAll(r'\}', '}');
+
+      // 2. Automatically evaluate and replace any [CALC: ...] tags with exact exath_engine results
+      final calcRegex = RegExp(r'\[CALC:\s*([^\]]+)\]');
+      if (calcRegex.hasMatch(currentResponse)) {
+        final evaluatedResponse = currentResponse.replaceAllMapped(calcRegex, (
+          match,
+        ) {
+          final expr = match.group(1)?.trim() ?? '';
+          try {
+            final sanitizedExpr = expr
+                .replaceAll('×', '*')
+                .replaceAll('÷', '/')
+                .replaceAll('pi', '3.141592653589793')
+                .replaceAll('e', '2.718281828459045');
+            final evaluated = CalcEvaluator.evaluate(
+              rawExpression: sanitizedExpr,
+              isDeg: true,
+              variables: const {},
+              numberFormat: NumberFormat.decimalPattern(),
+            );
+            return '$evaluated ($expr)';
+          } catch (_) {
+            return expr;
+          }
+        });
+        _upsertMessage(botId, evaluatedResponse);
       }
     } catch (e) {
       _appendMessage('Error: $e');

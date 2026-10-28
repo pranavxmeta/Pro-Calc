@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/settings_model.dart';
+import 'model.dart';
 
 /// Riverpod v3 Notifier managing application settings and persistence.
 class SettingsNotifier extends Notifier<SettingsModel> {

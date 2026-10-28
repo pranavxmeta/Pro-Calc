@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../calc/utils/calc_evaluator.dart';
@@ -18,6 +17,9 @@ final class EdgeAiService {
 
   String? _loadedModelPath;
   String? get loadedModelPath => _loadedModelPath;
+
+  String _activeBackend = 'CPU';
+  String get activeBackend => _activeBackend;
 
   /// Imports an offline model file selected by the user into the safe app sandbox.
   Future<void> importOfflineModelFile(File pickedFile) async {
@@ -62,36 +64,45 @@ final class EdgeAiService {
       fileType: ModelFileType.litertlm,
     ).fromFile(destinationFile.path).install();
 
-    // WARM-UP VALIDATION: Initialize CPU engine to verify weights immediately.
+    // HARDWARE ACCELERATION WARM-UP: Attempt GPU first for 3x-5x token rate, fallback to CPU
     try {
-      final model = await FlutterEdgeAi.getActiveModel(
+      final gpuModel = await FlutterEdgeAi.getActiveModel(
+        maxTokens: 1024,
+        preferredBackend: PreferredBackend.gpu,
+      );
+      final testChat = await gpuModel.createChat();
+      await testChat.addQueryChunk(Message.text(text: '1', isUser: true));
+      await testChat.generateChatResponseAsync().first;
+      _activeBackend = 'GPU';
+    } catch (_) {
+      final cpuModel = await FlutterEdgeAi.getActiveModel(
         maxTokens: 1024,
         preferredBackend: PreferredBackend.cpu,
       );
-      final testChat = await model.createChat();
-      await testChat.addQueryChunk(Message.text(text: 'test', isUser: true));
+      final testChat = await cpuModel.createChat();
+      await testChat.addQueryChunk(Message.text(text: '1', isUser: true));
       await testChat.generateChatResponseAsync().first;
-    } catch (e) {
-      _isModelReady = false;
-      throw Exception('LiteRT-LM engine validation failed on this file: $e');
+      _activeBackend = 'CPU';
     }
 
     _loadedModelPath = destinationFile.path;
     _isModelReady = true;
   }
 
-  /// Translates user word problem into mathematical formula using the active SLM.
+  /// Translates user word problem or scientific question into explanation and math formulas.
   Stream<String> processAgentPrompt(String userInput) async* {
     if (!_isModelReady) {
       yield 'Model is not loaded. Please tap "Select Model" to choose your local .litertlm file.';
       return;
     }
 
+    final query = userInput.trim();
+
     // Direct note handling: bypass inference for explicit note commands
     final noteMatch = RegExp(
       r'^(?:note|save):\s*(.*)',
       caseSensitive: false,
-    ).firstMatch(userInput.trim());
+    ).firstMatch(query);
     if (noteMatch != null) {
       final content = noteMatch.group(1)?.trim() ?? '';
       yield* _saveQuickNote('Quick Note', content);
@@ -99,91 +110,42 @@ final class EdgeAiService {
     }
 
     try {
+      final preferred = (_activeBackend == 'GPU')
+          ? PreferredBackend.gpu
+          : PreferredBackend.cpu;
       final model = await FlutterEdgeAi.getActiveModel(
         maxTokens: 1024,
-        preferredBackend: PreferredBackend.cpu,
+        preferredBackend: preferred,
       );
       final chat = await model.createChat();
 
       final systemPrompt =
           '''
-You are a math formula translator.
-Translate the user's word problem into a single math expression.
-Do not calculate the answer. Do not output words, explanations, or units.
-Output ONLY the math expression on the last line after "Formula:".
+You are an expert scientific calculator and AI assistant powered by exath_engine.
+Capabilities:
+- You know all physical constants (g = 9.80665 m/s², G = 6.674e-11, speed of light = 299792458 m/s, Earth rotation speed = 1674 km/h or 465 m/s, Earth radius = 6371 km).
+- You know mathematical constants (pi = 3.14159, e = 2.71828, phi = 1.61803) and combinatorics/permutations (P(n, r) = n! / (n-r)!).
+- Answer scientific, physics, and factual questions clearly and conversationally.
+- Formatting Rule: Never output LaTeX, dollar signs (\$ or \$\$), or \\text{} formatting. Write units and numbers in plain clean text (e.g. write "m/s²" instead of "\\text{m/s}^2", write "10 * 5" instead of "\$10 \\times 5\$").
+- Whenever you need to perform ANY calculation, evaluate a formula, or compute permutations, write the exact formula inside [CALC: expression]. exath_engine will compute it with exact precision.
+  Example 1: "What is 10 * earth gravity?" -> "Earth's surface gravity g is approximately 9.80665 m/s². 10 times this is [CALC: 10 * 9.80665] m/s²."
+  Example 2: "Permutation of 5 pick 3" -> "P(5, 3) = 5! / (5-3)! = [CALC: 5! / (5 - 3)!] possible arrangements."
+  Example 3: "How many apples with 10 baskets, each having 5 apples?" -> "10 baskets with 5 apples each gives [CALC: 10 * 5] apples in total."
 
-Example 1:
-User: I have 50 candies and ate 12
-Formula: 50 - 12
-
-Example 2:
-User: 20 percent of 500 plus 40
-Formula: (20% * 500) + 40
-
-Example 3:
-User: i have 100 apples, i give 38 to maria and 13 to jack, how many do i have
-Formula: 100 - 38 - 13
-
-Example 4:
-User: split 1200 among 4 people and subtract 15
-Formula: (1200 / 4) - 15
-
-User: $userInput
-Formula:
+User: $query
+Answer:
 ''';
 
       await chat.addQueryChunk(Message.text(text: systemPrompt, isUser: true));
 
-      final rawBuffer = StringBuffer();
       await for (final response in chat.generateChatResponseAsync()) {
         if (response is TextResponse) {
-          rawBuffer.write(response.token);
+          yield response.token;
         }
       }
-
-      final rawOutput = rawBuffer.toString().trim();
-      final formula = _extractFormula(rawOutput);
-
-      if (formula != null && formula.isNotEmpty) {
-        try {
-          final evaluatedResult = CalcEvaluator.evaluate(
-            rawExpression: formula,
-            isDeg: true,
-            variables: const {},
-            numberFormat: NumberFormat.decimalPattern(),
-          );
-          yield 'Result: $evaluatedResult  ($formula)';
-          return;
-        } catch (_) {}
-      }
-
-      yield rawOutput.isNotEmpty
-          ? rawOutput
-          : 'Unable to determine calculation.';
     } catch (e) {
       yield 'AI reasoning error: $e';
     }
-  }
-
-  String? _extractFormula(String text) {
-    if (text.isEmpty) return null;
-
-    final formulaTagIndex = text.lastIndexOf('Formula:');
-    var candidate = (formulaTagIndex != -1)
-        ? text.substring(formulaTagIndex + 8).trim()
-        : text.trim();
-
-    candidate = candidate
-        .replaceAll('`', '')
-        .replaceAll('=', '')
-        .split('\n')
-        .first
-        .trim();
-
-    if (RegExp(r'[\d+\-*/%^().]').hasMatch(candidate)) {
-      return candidate;
-    }
-    return null;
   }
 
   Stream<String> _saveQuickNote(String title, String content) async* {

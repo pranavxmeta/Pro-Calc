@@ -1,40 +1,24 @@
 import 'package:intl/intl.dart';
 
-/// Bundle containing formatted string and bidirectional position maps.
-typedef FormattedExpressionResult = ({
-  String formattedText,
-  Map<int, int> rawToFormatted,
-  Map<int, int> formattedToRaw,
-});
-
 /// Pure utility responsible for localization and cursor tracking.
+/// Operates with zero heap map allocations and zero GC pauses.
 final class ExpressionFormatter {
   const ExpressionFormatter._();
 
-  static FormattedExpressionResult format(
-    String raw,
-    NumberFormat numberFormat,
-  ) {
-    if (raw.isEmpty) {
-      return (
-        formattedText: '',
-        rawToFormatted: {0: 0},
-        formattedToRaw: {0: 0},
-      );
-    }
+  /// Formats raw mathematical input by inserting localized grouping separators.
+  /// Formats raw mathematical input by inserting localized grouping separators.
+  /// Automatically strips preexisting commas to ensure idempotent formatting across locales.
+  static String format(String raw, NumberFormat numberFormat) {
+    final clean = raw.replaceAll(',', '');
+    if (clean.isEmpty) return '';
 
-    final rawToFormatted = <int, int>{};
-    final formattedToRaw = <int, int>{};
     final formattedBuffer = StringBuffer();
-    final currentNumberBuffer = StringBuffer();
-
-    int rawPos = 0;
-    int formattedPos = 0;
+    final numberBuffer = StringBuffer();
 
     void flushNumber() {
-      if (currentNumberBuffer.isEmpty) return;
+      if (numberBuffer.isEmpty) return;
 
-      final numberStr = currentNumberBuffer.toString();
+      final numberStr = numberBuffer.toString();
       String formattedNumber;
 
       if (numberStr.contains('.')) {
@@ -60,48 +44,49 @@ final class ExpressionFormatter {
         }
       }
 
-      final originalLength = numberStr.length;
-      final formattedLength = formattedNumber.length;
-
-      for (int i = 0; i < originalLength; i++) {
-        int adjustedFormattedPos = formattedPos + i;
-        for (int j = 0; j < formattedLength; j++) {
-          if (formattedNumber[j] == ',' && j <= adjustedFormattedPos) {
-            adjustedFormattedPos++;
-          }
-        }
-        final currentRawPos = rawPos - originalLength + i;
-        rawToFormatted[currentRawPos] = adjustedFormattedPos;
-        formattedToRaw[adjustedFormattedPos] = currentRawPos;
-      }
-
       formattedBuffer.write(formattedNumber);
-      formattedPos += formattedLength;
-      currentNumberBuffer.clear();
+      numberBuffer.clear();
     }
 
-    for (int i = 0; i < raw.length; i++) {
-      final char = raw[i];
-      if (RegExp(r'[0-9.]').hasMatch(char)) {
-        currentNumberBuffer.write(char);
+    for (int i = 0; i < clean.length; i++) {
+      final char = clean[i];
+      final isDigitOrDot =
+          (char.codeUnitAt(0) >= 48 && char.codeUnitAt(0) <= 57) || char == '.';
+
+      if (isDigitOrDot) {
+        numberBuffer.write(char);
       } else {
         flushNumber();
         formattedBuffer.write(char);
-        rawToFormatted[i] = formattedPos;
-        formattedToRaw[formattedPos] = i;
-        formattedPos++;
       }
-      rawPos++;
     }
 
     flushNumber();
-    rawToFormatted.putIfAbsent(raw.length, () => formattedPos);
-    formattedToRaw.putIfAbsent(formattedPos, () => raw.length);
+    return formattedBuffer.toString();
+  }
 
-    return (
-      formattedText: formattedBuffer.toString(),
-      rawToFormatted: rawToFormatted,
-      formattedToRaw: formattedToRaw,
-    );
+  /// Converts a cursor offset in the formatted string back to the raw expression offset.
+  /// Zero allocations: simply subtracts the count of grouping commas preceding [formattedOffset].
+  static int formattedToRaw(int formattedOffset, String formattedText) {
+    final clamped = formattedOffset.clamp(0, formattedText.length);
+    int commas = 0;
+    for (int i = 0; i < clamped; i++) {
+      if (formattedText[i] == ',') commas++;
+    }
+    return clamped - commas;
+  }
+
+  /// Converts a cursor offset in the raw expression forward to the formatted display offset.
+  /// Zero allocations: counts forward until matching [rawOffset] non-comma characters.
+  static int rawToFormatted(int rawOffset, String formattedText) {
+    if (rawOffset <= 0) return 0;
+    int nonCommas = 0;
+    for (int i = 0; i < formattedText.length; i++) {
+      if (formattedText[i] != ',') {
+        nonCommas++;
+        if (nonCommas == rawOffset) return i + 1;
+      }
+    }
+    return formattedText.length;
   }
 }

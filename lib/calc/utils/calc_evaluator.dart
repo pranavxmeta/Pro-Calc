@@ -2,22 +2,48 @@ import 'package:exath_engine/exath_engine.dart';
 import 'package:intl/intl.dart';
 
 /// Pure evaluation adapter for `exath_engine`.
+/// Upgraded with pre-compiled static regexes, clean UTF-8 symbol mappings,
+/// and case-insensitive variable registration.
 final class CalcEvaluator {
   const CalcEvaluator._();
 
   static final RegExp _endingOperatorRegex = RegExp(r'[+\-*/×÷%^]$');
   static final RegExp _endingOpenParenRegex = RegExp(r'\($');
   static final RegExp _operatorRegex = RegExp(r'[+\-*/×÷%^E]');
-  static final RegExp _functionRegex = RegExp(r'(sin|cos|tan|log|ln|√)');
+  static final RegExp _functionRegex = RegExp(
+    r'(sin|cos|tan|asin|acos|atan|log|ln|√|∛|cbrt|sqrt|abs)',
+  );
   static final RegExp _endsWithERegex = RegExp(r'E[+-]?$');
+
+  // Pre-compiled regex instances: zero recompilations in the hot evaluation path
+  static final RegExp _additivePercentRegex = RegExp(
+    r'(\d+(?:\.\d+)?)\s*([+\-])\s*([+-]?\d+(?:\.\d+)?)%',
+  );
+  static final RegExp _standalonePercentRegex = RegExp(
+    r'([+-]?\d+(?:\.\d+)?)%',
+  );
+  static final RegExp _scientificENotationRegex = RegExp(
+    r'(\d+(?:\.\d+)?)\s*E\s*([+-]?\d+)',
+  );
+  static final RegExp _standaloneENotationRegex = RegExp(
+    r'(?<![\d.])E\s*([+-]?\d+)',
+  );
 
   /// Determines whether the expression is syntactically incomplete for live evaluation.
   static bool shouldSkipLiveEvaluation(String expression) {
     final trimmed = expression.trim();
     if (trimmed.isEmpty) return true;
 
-    final openCount = '('.allMatches(trimmed).length;
-    final closeCount = ')'.allMatches(trimmed).length;
+    int openCount = 0;
+    int closeCount = 0;
+    for (int i = 0; i < trimmed.length; i++) {
+      final code = trimmed.codeUnitAt(i);
+      if (code == 40) {
+        openCount++; // '('
+      } else if (code == 41) {
+        closeCount++; // ')'
+      }
+    }
 
     return (!_operatorRegex.hasMatch(trimmed) &&
             !_functionRegex.hasMatch(trimmed)) ||
@@ -38,19 +64,16 @@ final class CalcEvaluator {
     var clean = expression.replaceAll(',', '');
 
     // 1. Additive contextual percentages with optional sign: e.g. 100 + -6% or 100 - 15%
-    clean = clean.replaceAllMapped(
-      RegExp(r'(\d+(?:\.\d+)?)\s*([+\-])\s*([+-]?\d+(?:\.\d+)?)%'),
-      (m) {
-        final base = double.tryParse(m[1]!) ?? 0;
-        final op = m[2]!;
-        final pct = (double.tryParse(m[3]!) ?? 0) / 100;
-        final delta = base * pct;
-        return '$base $op ($delta)';
-      },
-    );
+    clean = clean.replaceAllMapped(_additivePercentRegex, (m) {
+      final base = double.tryParse(m[1]!) ?? 0;
+      final op = m[2]!;
+      final pct = (double.tryParse(m[3]!) ?? 0) / 100;
+      final delta = base * pct;
+      return '$base $op ($delta)';
+    });
 
     // 2. Multiplicative / division / standalone signed percentages: e.g. 100 * -6% -> 100 * (-0.06)
-    clean = clean.replaceAllMapped(RegExp(r'([+-]?\d+(?:\.\d+)?)%'), (m) {
+    clean = clean.replaceAllMapped(_standalonePercentRegex, (m) {
       final val = (double.tryParse(m[1]!) ?? 0) / 100;
       return '($val)';
     });
@@ -72,31 +95,41 @@ final class CalcEvaluator {
 
     // Expand scientific E-notations
     var processed = expr.replaceAllMapped(
-      RegExp(r'(\d+(?:\.\d+)?)\s*E\s*([+-]?\d+)'),
+      _scientificENotationRegex,
       (m) => '(${m[1]} * 10^(${m[2]}))',
     );
     processed = processed.replaceAllMapped(
-      RegExp(r'(?<![\d.])E\s*([+-]?\d+)'),
+      _standaloneENotationRegex,
       (m) => '(10^(${m[1]}))',
     );
 
-    // Normalize display symbols to engine syntax
+    // Normalize display mathematical symbols to engine syntax
     final prepared = processed
         .replaceAll(',', '')
         .replaceAll('×', '*')
+        .replaceAll('Ã—', '*')
         .replaceAll('÷', '/')
+        .replaceAll('Ã·', '/')
         .replaceAll('√', 'sqrt')
+        .replaceAll('âˆš', 'sqrt')
+        .replaceAll('∛', 'cbrt')
         .replaceAll('sin⁻¹', 'asin')
         .replaceAll('cos⁻¹', 'acos')
-        .replaceAll('tan⁻¹', 'atan');
+        .replaceAll('tan⁻¹', 'atan')
+        .replaceAll('π', 'pi');
 
     final session = ExathSession(
       angleMode: isDeg ? AngleMode.deg : AngleMode.rad,
     );
+
     try {
+      // Register both lowercase and uppercase so 'X' and 'x' evaluate identically
       for (final entry in variables.entries) {
         session.setVar(entry.key, entry.value);
+        session.setVar(entry.key.toLowerCase(), entry.value);
+        session.setVar(entry.key.toUpperCase(), entry.value);
       }
+
       final evalResult = session.eval(prepared);
 
       if (evalResult.isError) throw Exception(evalResult.error);
@@ -109,7 +142,7 @@ final class CalcEvaluator {
 
       return formatNumber(evalResult.re, numberFormat);
     } finally {
-      session.dispose(); // Guarded against native memory leaks
+      session.dispose();
     }
   }
 

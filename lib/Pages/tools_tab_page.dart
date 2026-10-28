@@ -1,127 +1,119 @@
-// lib/pages/tools_tab_page.dart (or your path)
+import 'dart:ui';
 
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pro_calc/assistant/ui/assistant_sheet.dart';
 import 'package:pro_calc/normcalc/ui/normcalc_app.dart';
 
-// import 'calculators/mortgage_page.dart';
-// import 'calculators/currency_converter_page.dart';
-// import 'calculators/discount_calc_page.dart';
-// import 'calculators/time_zone_converter_page.dart';
-// import 'calculators/bmi_calc_page.dart';
-// import 'calculators/tip_calc_page.dart';
-
 import 'Export_Page_list/tools_page_list.dart';
 
-class ToolsTabPage extends StatelessWidget {
-  const ToolsTabPage({super.key});
-
+/// Screen hosting utility calculation tools, AI assistant, and productivity apps.
+///
+/// Shares the frosted glassmorphism visual language, 4-column squircle grid,
+/// and bold crisp typography with [ToolsScreen] and [ShapesPage].
+class const ToolsTabPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: null, // No top navigation bar for the tab itself
-      child: SafeArea(child: ToolsTabGridContent()),
-    );
+    return const ToolsTabGridContent();
   }
 }
 
-class ToolsTabGridContent extends StatelessWidget {
-  ToolsTabGridContent({super.key});
-
-  final List<Map<String, dynamic>> toolsList = [
-    {
-      'name': 'Date Calc',
-      'icon': FluentIcons.calendar_24_regular,
-      'page': const DateCalcPage(),
-    },
-    // {'name': 'Mortgage', 'icon': FluentIcons.home_24_regular, 'page': const MortgagePage()},
-    // {'name': 'Currency', 'icon': FluentIcons.money_24_regular, 'page': const CurrencyConverterPage()},
-    {
-      'name': 'Notes',
-      'icon': FluentIcons.tag_24_regular,
-      'page': const NotesListPage(),
-    },
-    {
-      'name': 'AI Chat',
-      'icon':
-          FluentIcons.chat_sparkle_24_regular, // or FluentIcons.bot_24_regular
-      'page': const AssistantSheet(
+/// Compact 4-Column Grid for Utility Tools and Calculators.
+class const ToolsTabGridContent({super.key}) extends StatelessWidget {
+  static const _tools = [
+    (
+      'Date Calc',
+      FluentIcons.calendar_24_regular,
+      Color(0xFF007AFF),
+      DateCalcPage(),
+    ),
+    ('Notes', FluentIcons.tag_24_regular, Color(0xFFFF9500), NotesListPage()),
+    (
+      'AI Chat',
+      FluentIcons.chat_sparkle_24_regular,
+      Color(0xFFAF52DE),
+      AssistantSheet(
         modelUrl: 'https://huggingface.co/litert-community/SmolLM2-360M-Instruct/resolve/main/SmolLM2_360M_instruct.litertlm',
       ),
-    },
-    // {'name': 'new chat', 'icon': FluentIcons.globe_24_regular, 'page': const TimeZoneConverterPage()},
-    {
-      'name': 'BMI',
-      'icon': FluentIcons.person_24_regular,
-      'page': const NormCalcApp(),
-    },
-    {
-      'name': 'Fuel Cost',
-      'icon': FluentIcons.gas_pump_24_regular,
-      'page': const FuelCostCalcPage(),
-    },
-    // {'name': 'Tip Calc', 'icon': FluentIcons.food_24_regular, 'page': const TipCalcPage()},
-    {
-      'name': 'Loan Calc',
-      'icon': FluentIcons.money_hand_24_regular,
-      'page': const LoanCalcPage(),
-    },
+    ),
+    ('BMI', FluentIcons.person_24_regular, Color(0xFF00C7BE), NormCalcApp()),
+    (
+      'Fuel Cost',
+      FluentIcons.gas_pump_24_regular,
+      Color(0xFFFF3B30),
+      FuelCostCalcPage(),
+    ),
+    (
+      'Loan Calc',
+      FluentIcons.money_hand_24_regular,
+      Color(0xFF34C759),
+      LoanCalcPage(),
+    ),
   ];
+
+  void _navigateToTool(BuildContext context, Widget page) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) => page,
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryTextColor = isDark ? Colors.white : Colors.black;
+    final cardBorderColor = isDark
+        ? const Color.fromRGBO(255, 255, 255, 0.10)
+        : const Color.fromRGBO(0, 0, 0, 0.08);
+
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      padding: const .fromLTRB(4.0, 2.0, 4.0, 16.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        childAspectRatio: 1,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1.10,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
       ),
-      itemCount: toolsList.length,
+      itemCount: _tools.length,
       itemBuilder: (context, index) {
-        final tool = toolsList[index];
+        final (name, icon, accentColor, page) = _tools[index];
+
         return GestureDetector(
-          onTap: () {
-            if (tool['page'] != null) {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) => tool['page'] as Widget,
-                ),
-              );
-            } else {
-              // Fallback for any tool that might not have a page defined yet
-              debugPrint('Tapped on: ${tool['name']}, but no page is defined.');
-            }
-          },
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _navigateToTool(context, page),
           child: Container(
             decoration: BoxDecoration(
-              color: CupertinoTheme.of(context).brightness == Brightness.dark
-                  ? CupertinoColors.darkBackgroundGray.withValues(alpha: 0.5)
-                  : CupertinoColors.systemGrey6,
-              borderRadius: BorderRadius.circular(20),
+              color: isDark
+                  ? const Color.fromRGBO(255, 255, 255, 0.035)
+                  : const Color.fromRGBO(255, 255, 255, 0.62),
+              borderRadius: .circular(14.0),
+              border: Border.all(width: 1.0, color: cardBorderColor),
             ),
+            padding: const .symmetric(vertical: 4.0, horizontal: 4.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: .center,
               children: [
-                Icon(
-                  tool['icon'],
-                  size: 32,
-                  color: CupertinoTheme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 8),
+                Icon(icon, size: 24.0, color: accentColor),
+                const SizedBox(height: 4.0),
                 Text(
-                  tool['name'],
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Inter',
-                    color: CupertinoTheme.of(context).textTheme.textStyle.color,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
+                  name,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'RedditSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: primaryTextColor,
+                    letterSpacing: 1,
+                  ),
+                  textAlign: .center,
                 ),
               ],
             ),

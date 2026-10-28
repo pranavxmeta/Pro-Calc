@@ -731,22 +731,20 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
   ]);
 }
 
-typedef $$NoteSheetsTableCreateCompanionBuilder =
-    NoteSheetsCompanion Function({
-      Value<int> id,
-      Value<String> title,
-      Value<double> grandTotal,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-typedef $$NoteSheetsTableUpdateCompanionBuilder =
-    NoteSheetsCompanion Function({
-      Value<int> id,
-      Value<String> title,
-      Value<double> grandTotal,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
+typedef $$NoteSheetsTableCreateCompanionBuilder = NoteSheetsCompanion Function({
+  Value<int> id,
+  Value<String> title,
+  Value<double> grandTotal,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+typedef $$NoteSheetsTableUpdateCompanionBuilder = NoteSheetsCompanion Function({
+  Value<int> id,
+  Value<String> title,
+  Value<double> grandTotal,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
 
 final class $$NoteSheetsTableReferences
     extends BaseReferences<_$NotesDatabase, $NoteSheetsTable, NoteSheet> {
@@ -979,7 +977,7 @@ class $$NoteSheetsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$NoteSheetsTable, NoteSheet>(table),
                   $$NoteSheetsTableReferences(db, table, e),
                 ),
               )
@@ -1300,7 +1298,9 @@ class $$NoteDocumentEntriesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$NoteDocumentEntriesTable, NoteDocumentEntry>(
+                    table,
+                  ),
                   $$NoteDocumentEntriesTableReferences(db, table, e),
                 ),
               )
@@ -1326,19 +1326,15 @@ class $$NoteDocumentEntriesTableTableManager
                     >
                   >(state) {
                     if (sheetId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.sheetId,
-                                referencedTable:
-                                    $$NoteDocumentEntriesTableReferences
-                                        ._sheetIdTable(db),
-                                referencedColumn:
-                                    $$NoteDocumentEntriesTableReferences
-                                        ._sheetIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sheetId,
+                        referencedTable: $$NoteDocumentEntriesTableReferences
+                            ._sheetIdTable(db),
+                        referencedColumn: $$NoteDocumentEntriesTableReferences
+                            ._sheetIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;

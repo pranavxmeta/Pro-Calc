@@ -1,8 +1,7 @@
-// import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart' hide ThemeMode;
+import 'package:material_ui/material_ui.dart';
 // import 'package:flutter_displaymode/flutter_displaymode.dart';
 // import 'package:pro_calc/Pages/calc_page.dart';
 
@@ -42,67 +41,43 @@ void main() async {
   }
 }
 
+// lib/main.dart
 class ProCalc extends ConsumerWidget {
   const ProCalc({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(themeProvider);
-    ThemeMode effectiveThemeMode = themeState.themeMode;
 
-    if (themeState.followSystemTheme) {
-      final brightness = MediaQuery.platformBrightnessOf(context);
-      effectiveThemeMode = brightness == Brightness.dark
-          ? ThemeMode.dark
-          : ThemeMode.light;
-    }
+    // Native Material ThemeMode resolving cleanly with zero type collisions
+    final ThemeMode effectiveThemeMode = themeState.followSystemTheme
+        ? ThemeMode.system
+        : themeState.themeMode;
 
-    final theme = effectiveThemeMode == ThemeMode.light
-        ? lightTheme
-        : darkTheme;
+    final orientation = MediaQuery.orientationOf(context);
 
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: theme.barBackgroundColor,
-        systemNavigationBarColor: theme.barBackgroundColor,
-        systemNavigationBarIconBrightness: effectiveThemeMode == ThemeMode.light
-            ? Brightness.dark
-            : Brightness.light,
-      ),
-    );
+    final Widget homeContent = (kIsWeb && orientation == Orientation.landscape)
+        ? const Scaffold(
+            body: Center(
+              child: Text(
+                'The app is best viewed in portrait mode',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+          )
+        : const CalcPage();
 
-    final orientation = MediaQuery.of(context).orientation;
-
-    Widget homeContent;
-
-    if (kIsWeb && orientation == Orientation.landscape) {
-      homeContent = const CupertinoPageScaffold(
-        child: Center(
-          child: Text(
-            'The app is best viewed in portrait mode',
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      );
-    } else {
-      homeContent = const CalcPage();
-    }
-
-    return CupertinoApp(
+    return MaterialApp(
       localizationsDelegates: const [
         DefaultMaterialLocalizations.delegate,
         DefaultCupertinoLocalizations.delegate,
         DefaultWidgetsLocalizations.delegate,
       ],
-      theme: theme,
-      builder: (context, child) => Theme(
-        data: (effectiveThemeMode == ThemeMode.dark
-            ? AppTheme.dark
-            : AppTheme.light),
-        child: child ?? const SizedBox.shrink(),
-      ),
       debugShowCheckedModeBanner: false,
       title: 'Pro Calc',
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: effectiveThemeMode,
       home: homeContent,
     );
   }

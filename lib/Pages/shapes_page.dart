@@ -1,112 +1,107 @@
-import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'Export_Page_list/shape_page_list.dart';
 
-class ShapesPage extends StatelessWidget {
-  const ShapesPage({super.key});
-
+/// Screen hosting geometric shape calculation tools.
+///
+/// Shares the frosted glassmorphism visual language, 4-column squircle grid,
+/// and typography with [ToolsScreen].
+class const ShapesPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: null,
-      child: SafeArea(
-        child: ShapesGridContent(),
-      ),
-    );
+    return const ShapesGridContent();
   }
 }
 
-class ShapesGridContent extends StatelessWidget {
-  ShapesGridContent({super.key});
-
-  final List<Map<String, dynamic>> shapesList = [
-    {'name': 'Rectangle', 'icon': FluentIcons.rectangle_landscape_24_regular},
-    {'name': 'Square', 'icon': FluentIcons.square_24_regular},
-    {'name': 'Circle', 'icon': FluentIcons.circle_24_regular},
-    {'name': 'Triangle', 'icon': FluentIcons.triangle_24_regular},
-    {'name': 'Trapezoid', 'icon': FluentIcons.triangle_24_regular},
+/// Compact 4-Column Grid for Shape Calculators.
+class const ShapesGridContent({super.key}) extends StatelessWidget {
+  static const _shapes = [
+    (
+      'Rectangle',
+      FluentIcons.rectangle_landscape_24_regular,
+      Color(0xFF007AFF),
+    ),
+    ('Square', FluentIcons.square_24_regular, Color(0xFF34C759)),
+    ('Circle', FluentIcons.circle_24_regular, Color(0xFFFF9500)),
+    ('Triangle', FluentIcons.triangle_24_regular, Color(0xFFFF3B30)),
+    ('Trapezoid', FluentIcons.triangle_24_regular, Color(0xFF5856D6)),
   ];
 
   void _navigateToShape(BuildContext context, String name) {
-    Widget? page;
-    switch (name) {
-      case 'Rectangle':
-        page = const RectangleShapePage();
-        break;
-      case 'Square':
-        page = const SquareShapePage();
-        break;
-      case 'Circle':
-        page = const CircleShapePage();
-        break;
-      case 'Triangle':
-        page = const TriangleShapePage();
-        break;
-      case 'Trapezoid':
-        page = const TrapezoidShapePage();
-        break;
-      default:
-        return;
-    }
-    Navigator.push(
-      context,
+    final Widget? page = switch (name) {
+      'Rectangle' => const RectangleShapePage(),
+      'Square' => const SquareShapePage(),
+      'Circle' => const CircleShapePage(),
+      'Triangle' => const TriangleShapePage(),
+      'Trapezoid' => const TrapezoidShapePage(),
+      _ => null,
+    };
+
+    if (page == null) return;
+
+    Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => page!,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, animation, __) => page,
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 200),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    final Color backgroundColor = isDarkMode
-        ? const Color.fromARGB(255, 45, 45, 80)
-        : const Color.fromARGB(255, 248, 248, 248);
+    final primaryTextColor = isDark ? Colors.white : Colors.black;
+    final cardBorderColor = isDark
+        ? const Color.fromRGBO(255, 255, 255, 0.10)
+        : const Color.fromRGBO(0, 0, 0, 0.08);
+
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      padding: const .fromLTRB(4.0, 2.0, 4.0, 16.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        childAspectRatio: 1,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1.10,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
       ),
-      itemCount: shapesList.length,
+      itemCount: _shapes.length,
       itemBuilder: (context, index) {
+        final (name, icon, accentColor) = _shapes[index];
+
         return GestureDetector(
-          onTap: () => _navigateToShape(context, shapesList[index]['name']),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _navigateToShape(context, name),
           child: Container(
             decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(20),
+              color: isDark
+                  ? const Color.fromRGBO(255, 255, 255, 0.035)
+                  : const Color.fromRGBO(255, 255, 255, 0.62),
+              borderRadius: .circular(14.0),
+              border: Border.all(width: 1.0, color: cardBorderColor),
             ),
+            padding: const .symmetric(vertical: 4.0, horizontal: 4.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: .center,
               children: [
-                Icon(
-                  shapesList[index]['icon'],
-                  size: 32,
-                  color: CupertinoColors.activeBlue,
-                ),
-                const SizedBox(height: 8),
+                Icon(icon, size: 24.0, color: accentColor),
+                const SizedBox(height: 4.0),
                 Text(
-                  shapesList[index]['name'],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Inter',
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'RedditSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: primaryTextColor,
+                    letterSpacing: 1,
                   ),
-                  textAlign: TextAlign.center,
+                  textAlign: .center,
                 ),
               ],
             ),

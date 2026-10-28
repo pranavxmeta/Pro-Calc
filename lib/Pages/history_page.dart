@@ -2,7 +2,9 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import '../history/model/calculation_history.dart';
+
+import '../feat/history/model/calculation_history.dart';
+
 import 'package:cupertino_ui/cupertino_ui.dart';
 
 // import 'package:flutter/services.dart';
@@ -190,9 +192,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                               FluentIcons.history_24_regular,
                                               size: 20,
                                               color:
-                                                  CupertinoTheme.of(
-                                                        context,
-                                                      ).brightness ==
+                                                  CupertinoTheme.of(context)
+                                                          .brightness ==
                                                       Brightness.dark
                                                   ? AppColors.darkGrey
                                                   : AppColors.lightGrey,
@@ -213,10 +214,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                                             alpha: 0.87,
                                                           ),
                                                 ),
-                                                overflow: TextOverflow
-                                                    .ellipsis, // Show '...' if too long
-                                                maxLines:
-                                                    1, // Ensure it stays on one line
+                                                overflow: TextOverflow.ellipsis, // Show '...' if too long
+                                                maxLines: 1, // Ensure it stays on one line
                                                 softWrap:
                                                     false, // Prevent wrapping
                                               ),
@@ -230,14 +229,13 @@ class _HistoryPageState extends State<HistoryPage> {
                                             fontFamily: 'RedditSans',
                                             fontSize: 24,
                                             fontWeight: FontWeight(500),
-                                            color: CupertinoTheme.of(
-                                              context,
-                                            ).textTheme.textStyle.color,
+                                            color: CupertinoTheme.of(context)
+                                                .textTheme
+                                                .textStyle
+                                                .color,
                                           ),
-                                          overflow: TextOverflow
-                                              .ellipsis, // Handle potential overflow
-                                          maxLines:
-                                              2, // Allow maybe two lines for result
+                                          overflow: TextOverflow.ellipsis, // Handle potential overflow
+                                          maxLines: 2, // Allow maybe two lines for result
                                           softWrap: true,
                                         ),
                                       ],
@@ -251,9 +249,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                       style: TextStyle(
                                         fontSize: 12,
                                         color:
-                                            CupertinoTheme.of(
-                                                  context,
-                                                ).brightness ==
+                                            CupertinoTheme.of(context)
+                                                    .brightness ==
                                                 Brightness.dark
                                             ? AppColors.darkGrey
                                             : AppColors.lightTimestampColor,

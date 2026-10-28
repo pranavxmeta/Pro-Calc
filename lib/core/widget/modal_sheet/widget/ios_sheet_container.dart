@@ -1,12 +1,14 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../model/ios_sheet_options.dart';
 import '../theme/ios_sheet_tokens.dart';
 
-/// Interactive draggable card container featuring real-time frosted glass
-/// and specular border reflections.
+/// Interactive draggable frosted glass container.
+///
+/// Features dynamic blur ramp-up driven by the entrance animation
+/// (0.0ms initial GPU blur cost) and matrix-only translation dragging.
 final class IosSheetContainer extends StatefulWidget {
   const IosSheetContainer({
     required this.child,
@@ -25,75 +27,90 @@ final class IosSheetContainer extends StatefulWidget {
 
 final class _IosSheetContainerState extends State<IosSheetContainer>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _dragController;
-  double _dragOffset = 0.0;
+  late final AnimationController _springController;
+  final ValueNotifier<double> _dragOffsetNotifier = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
     super.initState();
-    _dragController = AnimationController(
+    _springController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 260),
-    )..addListener(() => setState(() {}));
+      duration: const Duration(milliseconds: 240),
+    );
   }
 
   @override
   void dispose() {
-    _dragController.dispose();
+    _springController.dispose();
+    _dragOffsetNotifier.dispose();
     super.dispose();
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     if (!widget.options.enableDrag) return;
-    setState(() {
-      _dragOffset = (_dragOffset + details.delta.dy).clamp(
-        0.0,
-        double.infinity,
-      );
-    });
+    final current = _dragOffsetNotifier.value;
+    final next = (current + details.delta.dy).clamp(0.0, double.infinity);
+    if (current != next) {
+      _dragOffsetNotifier.value = next;
+    }
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
     if (!widget.options.enableDrag) return;
     final velocity = details.primaryVelocity ?? 0.0;
+    final currentOffset = _dragOffsetNotifier.value;
 
-    // Fast fling down or dragged > 120 pixels dismisses the sheet
-    if (velocity > 750.0 || _dragOffset > 120.0) {
+    if (velocity > 700.0 || currentOffset > 100.0) {
       Navigator.of(context).pop();
     } else {
-      // Spring back to base position
-      final springAnimation = Tween<double>(begin: _dragOffset, end: 0.0)
+      final springAnimation = Tween<double>(begin: currentOffset, end: 0.0)
           .animate(
             CurvedAnimation(
-              parent: _dragController,
+              parent: _springController,
               curve: IosSheetTokens.entryCurve,
             ),
           );
 
-      _dragController.forward(from: 0.0);
-      springAnimation.addListener(() {
-        setState(() => _dragOffset = springAnimation.value);
-      });
+      _springController.forward(from: 0.0);
+
+      void listener() {
+        _dragOffsetNotifier.value = springAnimation.value;
+        if (springAnimation.isCompleted) {
+          _springController.removeListener(listener);
+        }
+      }
+
+      _springController.addListener(listener);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final media = MediaQuery.of(context);
     final bottomInset = media.viewInsets.bottom;
     final paddingBottom = media.padding.bottom;
 
-    final baseRadius = Radius.circular(widget.options.cornerRadius);
-    final sheetBorderRadius = BorderRadius.all(baseRadius);
+    final resolvedRadius = widget.options.cornerRadius > 0.0
+        ? widget.options.cornerRadius
+        : 1.0;
+    final sheetBorderRadius = BorderRadius.circular(resolvedRadius);
 
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Transform.translate(
-        offset: Offset(0.0, _dragOffset),
-        child: GestureDetector(
-          onVerticalDragUpdate: _onVerticalDragUpdate,
-          onVerticalDragEnd: _onVerticalDragEnd,
-          behavior: HitTestBehavior.opaque,
+    final glassColors = isDark
+        ? IosSheetTokens.surfaceDark
+        : IosSheetTokens.surfaceLight;
+    final borderColor = isDark
+        ? IosSheetTokens.borderDark
+        : IosSheetTokens.borderLight;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ValueListenableBuilder<double>(
+          valueListenable: _dragOffsetNotifier,
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               widget.options.floatingMargin,
@@ -103,65 +120,71 @@ final class _IosSheetContainerState extends State<IosSheetContainer>
             ),
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: widget.options.maxWidth),
-              child: ClipRRect(
-                borderRadius: sheetBorderRadius,
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(
-                    sigmaX: IosSheetTokens.blurSigmaX,
-                    sigmaY: IosSheetTokens.blurSigmaY,
-                  ),
-                  child: DecoratedBox(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: sheetBorderRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? const Color.fromRGBO(0, 0, 0, 0.40)
+                          : const Color.fromRGBO(0, 0, 0, 0.06),
+                      blurRadius: 20.0,
+                      offset: const Offset(0.0, 8.0),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                // AnimatedBuilder ramps blur from 0.0 to target alongside the entrance curve
+                child: AnimatedBuilder(
+                  animation: widget.animation,
+                  builder: (context, staticContent) {
+                    final ramp = widget.animation.value;
+                    final sigma = (ramp * IosSheetTokens.blurSigmaX).clamp(
+                      0.0,
+                      32.0,
+                    );
+
+                    return BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                      child: staticContent,
+                    );
+                  },
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: widget.options.surfaceColor,
                       borderRadius: sheetBorderRadius,
                       border: Border.all(
-                        strokeAlign: BorderSide.strokeAlignInside,
-                        width: 1.2,
-                        color: IosSheetTokens.borderGlowLight,
+                        width: IosSheetTokens.borderWidth,
+                        color: borderColor,
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: glassColors,
                       ),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (widget.options.showGrabber)
-                          const _IosSheetGrabber(),
-                        Flexible(
-                          fit: FlexFit.loose,
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              bottom: paddingBottom > 0 ? paddingBottom : 12.0,
-                            ),
-                            child: widget.child,
-                          ),
-                        ),
-                      ],
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: 16.0,
+                        bottom: paddingBottom > 0 ? paddingBottom : 16.0,
+                      ),
+                      child: widget.child,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-final class _IosSheetGrabber extends StatelessWidget {
-  const _IosSheetGrabber();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 24.0,
-      child: Center(
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: IosSheetTokens.grabberColor,
-            borderRadius: BorderRadius.all(Radius.circular(999.0)),
-          ),
-          child: SizedBox.fromSize(size: IosSheetTokens.grabberSize),
+          builder: (context, dragOffset, cachedChild) {
+            return Transform.translate(
+              offset: Offset(0.0, dragOffset),
+              child: GestureDetector(
+                onVerticalDragUpdate: _onVerticalDragUpdate,
+                onVerticalDragEnd: _onVerticalDragEnd,
+                behavior: HitTestBehavior.opaque,
+                child: cachedChild,
+              ),
+            );
+          },
         ),
       ),
     );

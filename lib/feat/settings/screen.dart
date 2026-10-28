@@ -2,13 +2,13 @@ import 'package:apptoast/apptoast.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:material_ui/material_ui.dart' hide ThemeMode;
+import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pro_calc/core/theme/app_theme.dart';
-import 'package:pro_calc/settings/model/settings_model.dart';
+import 'package:pro_calc/feat/settings/model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../service/settings_state.dart';
+import 'state.dart';
 
 /// Lightweight record representing an action item in the settings sheet.
 typedef _SettingsAction = ({

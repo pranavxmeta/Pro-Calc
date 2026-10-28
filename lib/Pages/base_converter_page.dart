@@ -1,11 +1,14 @@
 import 'dart:convert';
+
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../history/model/calculation_history.dart';
+
+import '../feat/history/model/calculation_history.dart';
 import '../unit/model/units_info.dart';
 import 'history_page.dart';
+
 import 'package:intl/intl.dart';
 
 class BaseConverterPage<U extends Enum, Q> extends StatefulWidget {
@@ -126,9 +129,8 @@ class _BaseConverterPageState<U extends Enum, Q>
                       final String cleanedResult = result
                           .replaceAll(',', '')
                           .trim();
-                      if (RegExp(
-                        r'^[0-9]*\.?[0-9]*$',
-                      ).hasMatch(cleanedResult)) {
+                      if (RegExp(r'^[0-9]*\.?[0-9]*$')
+                          .hasMatch(cleanedResult)) {
                         setState(() {
                           _inputController.text = cleanedResult;
                           _inputController.selection = TextSelection.collapsed(

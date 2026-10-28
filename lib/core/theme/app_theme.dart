@@ -1,12 +1,8 @@
 import 'package:apptoast/apptoast.dart';
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart' hide ThemeMode;
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// Supported application theme modes.
-enum ThemeMode { light, dark }
 
 /// Immutable state holding active theme settings.
 /// Uses Dart 3.13 primary constructor declaring parameters.
@@ -24,7 +20,7 @@ class ThemeNotifier extends Notifier<ThemeState> {
   @override
   ThemeState build() {
     _loadPreferences();
-    return const ThemeState();
+    return ThemeState();
   }
 
   Future<void> _loadPreferences() async {
@@ -33,10 +29,13 @@ class ThemeNotifier extends Notifier<ThemeState> {
       final String? saved = prefs.getString(_modeKey);
       final bool follow = prefs.getBool(_followKey) ?? true;
 
-      state = ThemeState(
-        themeMode: saved == 'dark' ? ThemeMode.dark : ThemeMode.light,
-        followSystemTheme: follow,
-      );
+      final ThemeMode mode = switch (saved) {
+        'dark' => ThemeMode.dark,
+        'system' => ThemeMode.system,
+        _ => ThemeMode.light,
+      };
+
+      state = ThemeState(themeMode: mode, followSystemTheme: follow);
     } catch (e) {
       debugPrint('Theme load error: $e');
     }
@@ -59,7 +58,7 @@ class ThemeNotifier extends Notifier<ThemeState> {
   }
 }
 
-/// Global riverpod provider for application theme state.
+/// Global Riverpod provider for application theme state.
 final NotifierProvider<ThemeNotifier, ThemeState> themeProvider =
     NotifierProvider<ThemeNotifier, ThemeState>(ThemeNotifier.new);
 
@@ -72,60 +71,15 @@ const _toastTheme = ToastThemeData(
   },
 );
 
-/// Cupertino design themes consumed by CupertinoApp.
-const CupertinoThemeData lightTheme = CupertinoThemeData(
-  brightness: Brightness.light,
-  primaryColor: CupertinoColors.activeBlue,
-  barBackgroundColor: Color.fromRGBO(242, 242, 242, 0),
-  scaffoldBackgroundColor: Color.fromRGBO(249, 249, 249, 1),
-  textTheme: CupertinoTextThemeData(
-    textStyle: TextStyle(
-      fontFamily: 'RedditSans',
-      color: Color.fromRGBO(20, 20, 20, 0.65),
-    ),
-    navTitleTextStyle: TextStyle(
-      fontSize: 17,
-      fontWeight: FontWeight.w600,
-      color: CupertinoColors.label,
-    ),
-    navLargeTitleTextStyle: TextStyle(
-      fontSize: 34,
-      fontWeight: FontWeight.w700,
-      color: CupertinoColors.label,
-    ),
-  ),
-);
-
-const CupertinoThemeData darkTheme = CupertinoThemeData(
-  brightness: Brightness.dark,
-  primaryColor: CupertinoColors.systemIndigo,
-  barBackgroundColor: Color.fromRGBO(10, 10, 10, 0),
-  scaffoldBackgroundColor: Color.fromRGBO(10, 10, 10, 1),
-  textTheme: CupertinoTextThemeData(
-    textStyle: TextStyle(fontFamily: 'Inter', color: CupertinoColors.white),
-    navTitleTextStyle: TextStyle(
-      fontFamily: 'Inter',
-      fontSize: 17,
-      fontWeight: FontWeight.w600,
-      color: CupertinoColors.white,
-    ),
-    navLargeTitleTextStyle: TextStyle(
-      fontFamily: 'Inter',
-      fontSize: 34,
-      fontWeight: FontWeight.w700,
-      color: CupertinoColors.white,
-    ),
-  ),
-);
-
-/// Material design themes injected via builder for AppToast ThemeExtension lookup.
+/// Material 3 design themes configured for iOS-style Liquid Glass contrast.
 final class AppTheme {
   AppTheme._();
 
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: Colors.white,
+    // iOS slate grouped background ensuring white liquid glass borders & blurs pop
+    scaffoldBackgroundColor: const Color(0xFFF2F2F7),
     colorScheme: const ColorScheme.light(
       surface: Colors.white,
       onSurface: Color(0xFF09090B), // Zinc-950
@@ -137,9 +91,10 @@ final class AppTheme {
   static final ThemeData dark = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF09090B), // Zinc-950
+    // Deep obsidian background for dark liquid glass depth
+    scaffoldBackgroundColor: const Color(0xFF0F0F12),
     colorScheme: const ColorScheme.dark(
-      surface: Color(0xFF09090B),
+      surface: Color(0xFF18181B), // Zinc-900
       onSurface: Color(0xFFFAFAFA), // Zinc-50
       outline: Color(0xFF27272A), // Zinc-800
     ),

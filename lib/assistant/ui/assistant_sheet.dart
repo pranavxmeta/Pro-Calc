@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/assistant_state.dart';
 import '../providers/assistant_provider.dart';
+import '../services/edge_ai_service.dart';
 
 class AssistantSheet extends ConsumerStatefulWidget {
   final String? modelUrl;
@@ -156,18 +157,18 @@ class _TrailingStatusWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (status) {
-      ModelStatus.ready => const Row(
+      ModelStatus.ready => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             FluentIcons.checkmark_circle_20_filled,
             size: 16,
             color: CupertinoColors.systemGreen,
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
-            'Active',
-            style: TextStyle(
+            'Active (${EdgeAiService.instance.activeBackend})',
+            style: const TextStyle(
               fontSize: 13,
               color: CupertinoColors.systemGreen,
               fontWeight: FontWeight.w600,
@@ -262,12 +263,16 @@ class _CupertinoQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suggestions = [
+      (label: '🌍 10 * Earth Gravity', query: 'what is 10 * earth gravity'),
       (
-        label: '🍎 100 apples, give 38 & 13',
-        query: 'i have 100 apples, i give 38 to maria and 13 to jack, how many do i have',
+        label: '🔄 Earth Rotation Speed',
+        query: 'how much is earth rotation speed',
       ),
-      (label: '📊 20% of 500', query: '20% of 500'),
-      (label: '📝 note: Fuel 80', query: 'note: Fuel 80'),
+      (label: '🎲 Permutation 5 pick 3', query: 'permutations of 5 pick 3'),
+      (
+        label: '🍎 10 baskets with 5 apples',
+        query: 'how many apples with 10 baskets. each basket has 5 apples',
+      ),
     ];
 
     return Container(
@@ -340,7 +345,8 @@ class _CupertinoInputDock extends StatelessWidget {
               focusNode: focusNode,
               autofocus: false,
               padding: const .symmetric(horizontal: 14, vertical: 10),
-              placeholder: 'Type word problem, math, or note...',
+              placeholder:
+                  'Ask physics, math, permutations, or word problem...',
               placeholderStyle: const TextStyle(
                 color: CupertinoColors.placeholderText,
                 fontSize: 14,

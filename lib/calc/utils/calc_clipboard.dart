@@ -8,7 +8,7 @@ final class CalcClipboard {
   const CalcClipboard._();
 
   static final RegExp _validChars = RegExp(
-    r'^[0-9,\.\+\-*/×÷%^()\s]*(sin|cos|tan|log|ln|sqrt|π|e|X|Y)?$',
+    r'^[0-9,\.\+\-*/×÷%^()\s]*(sin|cos|tan|asin|acos|atan|log|ln|sqrt|cbrt|π|e|X|Y|x|y)?$',
   );
 
   static final List<RegExp> _invalidPatterns = [
@@ -24,13 +24,11 @@ final class CalcClipboard {
     final text = data?.text?.trim() ?? '';
     if (text.isEmpty) {
       AppToast.warning(context, 'Clipboard is empty');
-
       return null;
     }
 
     if (!_validChars.hasMatch(text)) {
       AppToast.error(context, 'Invalid characters in clipboard');
-
       return null;
     }
 
@@ -44,13 +42,15 @@ final class CalcClipboard {
     return text.replaceAll(' ', '');
   }
 
-  static Future<void> copy(BuildContext context, String text) async {
+  /// Copies text to clipboard. Returns `true` on success without showing a toast,
+  /// allowing caller UI widgets to display animated confirmation.
+  static Future<bool> copy(BuildContext context, String text) async {
     if (text.isNotEmpty && text != 'Error' && !text.contains('Infinity')) {
       await Clipboard.setData(ClipboardData(text: text));
-      if (!context.mounted) return;
-      AppToast.success(context, 'Answer copied to clipboard');
-    } else {
-      AppToast.error(context, 'No valid answer to copy');
+      return true;
     }
+    if (!context.mounted) return false;
+    AppToast.error(context, 'No valid answer to copy');
+    return false;
   }
 }
