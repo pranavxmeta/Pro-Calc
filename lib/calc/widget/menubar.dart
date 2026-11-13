@@ -1,128 +1,119 @@
 import 'dart:async';
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
-/// Unified configuration class for toolbar buttons.
-class ToolbarButtonConfig {
-  const ToolbarButtonConfig({
-    required this.icon,
-    this.iconSize,
-    this.color,
-    required this.onTap,
-    this.tooltip,
-  });
+typedef ToolbarAction = ({IconData icon, String tooltip, VoidCallback? onTap});
 
-  final IconData icon;
-  final double? iconSize;
-  final Color? color;
-  final VoidCallback onTap;
-  final String? tooltip;
-}
-
-/// High-performance Material 3 toolbar widget for quick calculator actions.
-/// Self-contained with zero parent rebuilds; retains Toolbox in a ready state.
-class CalcMenubar extends StatelessWidget {
-  const CalcMenubar({
-    super.key,
-    this.onCopy,
-    this.onPaste,
-    this.onToolbox,
-    this.customButtons,
-  });
-
-  final Future<bool> Function()? onCopy;
-  final VoidCallback? onPaste;
-  final VoidCallback? onToolbox;
-  final List<ToolbarButtonConfig>? customButtons;
-
+class const CalcMenubar({
+  super.key,
+  final bool isCompact = false,
+  final bool isVerticalMode = false,
+  final bool isReducedKeypad = false,
+  final VoidCallback? onToggleVertical,
+  final VoidCallback? onToggleReducedKeypad,
+  final Future<bool> Function()? onCopy,
+  final VoidCallback? onPaste,
+  final VoidCallback? onToolbox,
+  final List<ToolbarAction>? customButtons,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    if (customButtons != null && customButtons!.isNotEmpty) {
-      return _buildCustomButtons(context, customButtons!);
-    }
-
     final theme = Theme.of(context);
-    final iconColor = theme.colorScheme.onSurfaceVariant;
+    final color = theme.colorScheme.onSurfaceVariant;
+    final size = isCompact ? 34.0 : 40.0;
+    final iconSize = isCompact ? 18.0 : 22.0;
+
+    final actions =
+        customButtons ??
+        [
+          if (onPaste != null)
+            (
+              icon: FluentIcons.clipboard_paste_24_regular,
+              tooltip: 'Paste',
+              onTap: onPaste,
+            ),
+          if (onToolbox != null)
+            (
+              icon: FluentIcons.toolbox_24_regular,
+              tooltip: 'Toolbox',
+              onTap: onToolbox,
+            ),
+        ];
 
     return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      alignment: .centerLeft,
+      padding: const .symmetric(horizontal: 4.0, vertical: 2.0),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: .min,
           children: [
             if (onCopy != null)
-              _CopyButton(onCopy: onCopy!, defaultColor: iconColor),
-            const SizedBox(width: 8.0),
-            IconButton(
-              icon: Icon(
-                FluentIcons.clipboard_paste_24_regular,
-                size: 22.0,
-                color: iconColor,
+              _CopyButton(
+                onCopy: onCopy!,
+                color: color,
+                size: size,
+                iconSize: iconSize,
               ),
-              tooltip: 'Paste',
-              onPressed: onPaste,
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                minimumSize: const Size(40, 40),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-            const SizedBox(width: 8.0),
-            IconButton(
-              icon: Icon(
-                FluentIcons.toolbox_24_regular,
-                size: 22.0,
-                color: iconColor,
-              ),
-              tooltip: 'Toolbox',
-              onPressed: onToolbox,
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                minimumSize: const Size(40, 40),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildCustomButtons(
-    BuildContext context,
-    List<ToolbarButtonConfig> buttons,
-  ) {
-    final theme = Theme.of(context);
-    final iconColor = theme.colorScheme.onSurfaceVariant;
-
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (int i = 0; i < buttons.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8.0),
+            // Button 1: Toggle Keypad Matrix (5x7 Scientific <-> 4x5 Basic)
+            if (onToggleReducedKeypad != null) ...[
+              const SizedBox(width: 4.0),
               IconButton(
                 icon: Icon(
-                  buttons[i].icon,
-                  size: buttons[i].iconSize ?? 22.0,
-                  color: buttons[i].color ?? iconColor,
+                  FluentIcons.table_simple_24_regular,
+                  size: iconSize,
+                  color: isReducedKeypad ? theme.colorScheme.primary : color,
                 ),
-                tooltip: buttons[i].tooltip,
-                onPressed: buttons[i].onTap,
+                tooltip: isReducedKeypad
+                    ? 'Full Scientific Matrix'
+                    : 'Basic 4x5 Keypad',
+                onPressed: onToggleReducedKeypad,
+                style: IconButton.styleFrom(
+                  backgroundColor: isReducedKeypad
+                      ? theme.colorScheme.primary.withValues(alpha: 0.14)
+                      : Colors.transparent,
+                  minimumSize: Size(size, size),
+                  padding: .zero,
+                ),
+              ),
+            ],
+
+            // Button 2: Toggle Tape Mode (Single-line <-> Vertical Ledger)
+            if (onToggleVertical != null) ...[
+              const SizedBox(width: 4.0),
+              IconButton(
+                icon: Icon(
+                  FluentIcons.arrow_sort_down_lines_24_regular,
+                  size: iconSize,
+                  color: isVerticalMode ? theme.colorScheme.primary : color,
+                ),
+                tooltip: isVerticalMode
+                    ? 'Standard Mode'
+                    : 'Vertical Entry Mode',
+                onPressed: onToggleVertical,
+                style: IconButton.styleFrom(
+                  backgroundColor: isVerticalMode
+                      ? theme.colorScheme.primary.withValues(alpha: 0.14)
+                      : Colors.transparent,
+                  minimumSize: Size(size, size),
+                  padding: .zero,
+                ),
+              ),
+            ],
+
+            for (final btn in actions) ...[
+              const SizedBox(width: 4.0),
+              IconButton(
+                icon: Icon(btn.icon, size: iconSize, color: color),
+                tooltip: btn.tooltip,
+                onPressed: btn.onTap,
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.transparent,
-                  minimumSize: const Size(40, 40),
-                  padding: EdgeInsets.zero,
+                  minimumSize: Size(size, size),
+                  padding: .zero,
                 ),
               ),
             ],
@@ -133,87 +124,61 @@ class CalcMenubar extends StatelessWidget {
   }
 }
 
-/// Self-contained animated button that morphs into a checkmark upon successful copy.
-class _CopyButton extends StatefulWidget {
-  const _CopyButton({required this.onCopy, required this.defaultColor});
-
-  final Future<bool> Function() onCopy;
-  final Color defaultColor;
-
+class const _CopyButton({
+  required final Future<bool> Function() onCopy,
+  required final Color color,
+  required final double size,
+  required final double iconSize,
+}) extends StatefulWidget {
   @override
   State<_CopyButton> createState() => _CopyButtonState();
 }
 
 class _CopyButtonState extends State<_CopyButton> {
-  bool _isCopied = false;
-  Timer? _revertTimer;
+  bool _copied = false;
+  Timer? _timer;
 
   @override
   void dispose() {
-    _revertTimer?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
-  Future<void> _handleTap() async {
-    final success = await widget.onCopy();
-    if (success && mounted) {
-      HapticFeedback.lightImpact();
-      setState(() => _isCopied = true);
-      _revertTimer?.cancel();
-      _revertTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) {
-          setState(() => _isCopied = false);
-        }
-      });
+  Future<void> _tap() async {
+    if (await widget.onCopy() && mounted) {
+      Feedback.forTap(context);
+      setState(() => _copied = true);
+      _timer?.cancel();
+      _timer = Timer(
+        const Duration(milliseconds: 1500),
+        () => mounted ? setState(() => _copied = false) : null,
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final successColor = Theme.of(context).colorScheme.primary;
-
-    return IconButton(
-      tooltip: _isCopied ? 'Copied!' : 'Copy',
-      onPressed: _handleTap,
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        minimumSize: const Size(40, 40),
-        padding: EdgeInsets.zero,
+  Widget build(BuildContext context) => IconButton(
+    tooltip: _copied ? 'Copied!' : 'Copy',
+    onPressed: _tap,
+    style: IconButton.styleFrom(
+      backgroundColor: Colors.transparent,
+      minimumSize: Size(widget.size, widget.size),
+      padding: .zero,
+    ),
+    icon: AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      transitionBuilder: (child, anim) => ScaleTransition(
+        scale: anim,
+        child: FadeTransition(opacity: anim, child: child),
       ),
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        transitionBuilder: (child, animation) => ScaleTransition(
-          scale: animation,
-          child: FadeTransition(opacity: animation, child: child),
-        ),
-        child: _isCopied
-            ? Icon(
-                FluentIcons.checkmark_24_regular,
-                key: const ValueKey('copied_checkmark'),
-                size: 22.0,
-                color: successColor,
-              )
-            : Icon(
-                FluentIcons.copy_24_regular,
-                key: const ValueKey('normal_copy'),
-                size: 22.0,
-                color: widget.defaultColor,
-              ),
+      child: Icon(
+        _copied
+            ? FluentIcons.checkmark_24_regular
+            : FluentIcons.copy_24_regular,
+        key: ValueKey(_copied),
+        size: widget.iconSize,
+        color: _copied ? Theme.of(context).colorScheme.primary : widget.color,
       ),
-    );
-  }
+    ),
+  );
 }
-
-/// Backwards-compatible helper bridging existing call-sites to [CalcMenubar].
-Widget menubar(
-  BuildContext context, {
-  Future<bool> Function()? onCopy,
-  VoidCallback? onPaste,
-  VoidCallback? onToolbox,
-  List<ToolbarButtonConfig>? customButtons,
-}) => CalcMenubar(
-  onCopy: onCopy,
-  onPaste: onPaste,
-  onToolbox: onToolbox,
-  customButtons: customButtons,
-);

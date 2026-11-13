@@ -9,7 +9,7 @@ import '../screen/tools_screen.dart';
 /// Presents the tools hub as a modal sheet with liquid frosted glass styling.
 Future<void> showToolsSheet(
   BuildContext context, {
-  double heightFactor = 0.55,
+  double heightFactor = 0.48,
 }) {
   return context.showIosSheet<void>(
     options: const IosSheetOptions(),

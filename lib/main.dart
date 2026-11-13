@@ -78,7 +78,7 @@ class ProCalc extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: effectiveThemeMode,
-      home: homeContent,
+      home: CalcPage(),
     );
   }
 }

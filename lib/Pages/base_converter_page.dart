@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../feat/history/model/calculation_history.dart';
-import '../unit/model/units_info.dart';
+import '../feat/unit/model/units_info.dart';
 import 'history_page.dart';
 
 import 'package:intl/intl.dart';
@@ -103,7 +103,7 @@ class _BaseConverterPageState<U extends Enum, Q>
             }
           },
           child: Container(
-            height: MediaQuery.of(modalContext).size.height * 0.65,
+            height: MediaQuery.of(modalContext).size.height * 0.48,
             decoration: BoxDecoration(
               color: currentTheme.scaffoldBackgroundColor,
               borderRadius: const BorderRadius.only(

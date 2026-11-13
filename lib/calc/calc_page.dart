@@ -6,13 +6,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pro_calc/feat/calc/service/calc_input_service.dart';
 import 'package:pro_calc/feat/history/state.dart';
 
-// import '../Pages/utils_settings_provider.dart';
-
-import '../feat/history/model/calculation_history.dart';
 import '../feat/history/widget/history_sheet.dart';
 import '../feat/settings/screen.dart';
 import '../feat/settings/state.dart';
-
 import '../feat/tool/widget/tools_sheet.dart';
 import 'utils/calc_clipboard.dart';
 import 'utils/calc_evaluator.dart';
@@ -23,8 +19,8 @@ import 'widget/calc_keypad.dart';
 import 'widget/kmathcon.dart';
 import 'widget/menubar.dart';
 
-/// Streamlined calculator controller screen with snappy 200ms transitions,
-/// decoupled input parsing, and strict variable assignment workflows.
+/// Calculator controller screen with snappy transitions,
+/// decoupled input parsing, responsive layout scaling, and Option B dual-mode toggling.
 class CalcPage extends ConsumerStatefulWidget {
   const CalcPage({super.key});
 
@@ -43,6 +39,33 @@ class _CalcPageState extends ConsumerState<CalcPage>
   final ValueNotifier<String> _answerNotifier = ValueNotifier<String>('');
   final ValueNotifier<bool> _isDegNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<bool> _isShiftNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isVerticalNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isReducedKeypadNotifier = ValueNotifier<bool>(
+    false,
+  );
+
+  static const _verticalSymbols = [
+    '(',
+    ')',
+    'del',
+    '÷',
+    '7',
+    '8',
+    '9',
+    '×',
+    '4',
+    '5',
+    '6',
+    '-',
+    '1',
+    '2',
+    '3',
+    '+',
+    '00',
+    '0',
+    '.',
+    '=',
+  ];
 
   bool _lastActionWasEval = false;
   String _rawExpression = '';
@@ -55,7 +78,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
     _inputController = TextEditingController();
     _inputScrollController = ScrollController();
 
-    // Responsive 200ms spring-eased motion for fast numeric interactions
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -88,6 +110,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
     _answerNotifier.dispose();
     _isDegNotifier.dispose();
     _isShiftNotifier.dispose();
+    _isVerticalNotifier.dispose();
+    _isReducedKeypadNotifier.dispose();
     super.dispose();
   }
 
@@ -108,13 +132,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
 
   // --- Evaluation Engine ---
   void _evaluate({bool finalEvaluation = false}) {
-    if (_rawExpression.trim().isEmpty) {
+    final cleanExpr = _rawExpression.replaceAll('\n', ' ').trim();
+
+    if (cleanExpr.isEmpty) {
       _answerNotifier.value = '';
       return;
     }
 
-    if (!finalEvaluation &&
-        CalcEvaluator.shouldSkipLiveEvaluation(_rawExpression)) {
+    if (!finalEvaluation && CalcEvaluator.shouldSkipLiveEvaluation(cleanExpr)) {
       _answerNotifier.value = '';
       return;
     }
@@ -122,7 +147,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
     try {
       final locale = ref.read(settingsProvider.select((s) => s.numberLocale));
       final result = CalcEvaluator.evaluate(
-        rawExpression: _rawExpression,
+        rawExpression: cleanExpr,
         isDeg: _isDegNotifier.value,
         variables: _variables,
         numberFormat: _getNumberFormat(locale),
@@ -136,10 +161,14 @@ class _CalcPageState extends ConsumerState<CalcPage>
   void _applyFormattedText(String newRaw, int newRawCursor) {
     final cleanRaw = newRaw.replaceAll(',', '');
     final locale = ref.read(settingsProvider.select((s) => s.numberLocale));
-    final formattedText = ExpressionFormatter.format(
-      cleanRaw,
-      _getNumberFormat(locale),
-    );
+    final numFormat = _getNumberFormat(locale);
+
+    final formattedText = cleanRaw.contains('\n')
+        ? cleanRaw
+              .split('\n')
+              .map((line) => ExpressionFormatter.format(line, numFormat))
+              .join('\n')
+        : ExpressionFormatter.format(cleanRaw, numFormat);
 
     _rawExpression = cleanRaw;
 
@@ -219,10 +248,52 @@ class _CalcPageState extends ConsumerState<CalcPage>
     '(' ||
     ')' ||
     '!' => () => _handleSpecialFunctions(key),
+    // Guarded pattern matching: only vertical tape mode intercepts operators with newlines
+    '+' when _isVerticalNotifier.value => () => _handleVerticalOperator('+'),
+    '-' when _isVerticalNotifier.value => () => _handleVerticalOperator('-'),
     '+' => _isShiftNotifier.value ? _handleNegate : () => _handleOperator('+'),
     '-' || '×' || '÷' => () => _handleOperator(key),
     _ => () => _handleStandardInput(key),
   }();
+
+  void _handleVerticalOperator(String op) {
+    final currentAns = _answerNotifier.value;
+
+    if (_lastActionWasEval &&
+        currentAns.isNotEmpty &&
+        currentAns != 'Error' &&
+        !currentAns.contains('Infinity')) {
+      final cleanAns = currentAns.replaceAll(',', '');
+      _lastActionWasEval = false;
+      final newExpr = '$cleanAns\n$op ';
+      _applyFormattedText(newExpr, newExpr.length);
+      _smoothResetAnimation();
+      _evaluate();
+      return;
+    }
+
+    if (_rawExpression.trim().isEmpty) {
+      if (op == '-') _updateExpression('-', 1);
+      return;
+    }
+
+    final trimmed = _rawExpression.trimRight();
+    if (trimmed.endsWith('+') ||
+        trimmed.endsWith('-') ||
+        trimmed.endsWith('×') ||
+        trimmed.endsWith('÷')) {
+      final lastOpIndex = _rawExpression.lastIndexOf(RegExp(r'[+\-×÷]'));
+      if (lastOpIndex != -1) {
+        final updated = '${_rawExpression.substring(0, lastOpIndex)}$op ';
+        _updateExpression(updated, updated.length);
+        return;
+      }
+    }
+
+    final prefix = _rawExpression.endsWith('\n') ? '' : '\n';
+    final updated = '$_rawExpression$prefix$op ';
+    _updateExpression(updated, updated.length);
+  }
 
   void _handleClearAll() {
     HapticFeedback.mediumImpact();
@@ -244,7 +315,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
         !currentAns.contains('Infinity')) {
       ref
           .read(historyControllerProvider.notifier)
-          .record(_rawExpression, currentAns);
+          .record(_rawExpression.replaceAll('\n', ' '), currentAns);
       HapticFeedback.mediumImpact();
       _animationController.forward();
       _lastActionWasEval = true;
@@ -256,6 +327,20 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final rawPos = _getRawCursorPosition();
 
     if (rawPos > 0) {
+      if (_isVerticalNotifier.value && rawPos >= 3) {
+        final before = _rawExpression.substring(0, rawPos);
+        if (before.endsWith('\n+ ') ||
+            before.endsWith('\n- ') ||
+            before.endsWith('\n× ') ||
+            before.endsWith('\n÷ ')) {
+          final updated =
+              _rawExpression.substring(0, rawPos - 3) +
+              _rawExpression.substring(rawPos);
+          _updateExpression(updated, rawPos - 3);
+          return;
+        }
+      }
+
       final updated =
           _rawExpression.substring(0, rawPos - 1) +
           _rawExpression.substring(rawPos);
@@ -264,7 +349,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
   }
 
   void _handleVariable(String varName) {
-    // 1. Post-evaluation: Storing active result directly into variable
     if (_lastActionWasEval) {
       final currentAns = _answerNotifier.value;
       if (currentAns.isNotEmpty &&
@@ -277,11 +361,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
             settingsProvider.select((s) => s.numberLocale),
           );
           _variables[varName] = value;
-
-          _lastActionWasEval = false; // Reset to typing mode
+          _lastActionWasEval = false;
           _answerNotifier.value =
               '$varName = ${CalcEvaluator.formatNumber(value, _getNumberFormat(locale))}';
-
           _applyFormattedText('', 0);
           _smoothResetAnimation();
           _showFeedback('Saved to $varName = $cleanAns');
@@ -292,7 +374,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
       return;
     }
 
-    // 2. Typing mode: Insert variable token into current formula
     final res = CalcInputService.insertToken(
       expression: _rawExpression,
       cursor: _getRawCursorPosition(),
@@ -468,13 +549,9 @@ class _CalcPageState extends ConsumerState<CalcPage>
     ) {
       if (prev != null && prev != next) {
         final newFormat = _getNumberFormat(next);
-
-        // 1. Re-format the active input formula
         if (_rawExpression.isNotEmpty) {
           _applyFormattedText(_rawExpression, _getRawCursorPosition());
         }
-
-        // 2. Re-format evaluated answer in-place without wiping it
         if (_lastActionWasEval && _answerNotifier.value.isNotEmpty) {
           final cleanAns = _answerNotifier.value.replaceAll(',', '');
           final value = double.tryParse(cleanAns);
@@ -499,80 +576,180 @@ class _CalcPageState extends ConsumerState<CalcPage>
             ? const Color(0xFF0F0F12)
             : const Color.fromRGBO(242, 242, 247, 1.0),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 35,
-                  child: RepaintBoundary(
-                    child: CalcDisplay(
-                      inputController: _inputController,
-                      scrollController: _inputScrollController,
-                      animationController: _animationController,
-                      inputTextAnimation: _inputTextSizeAnimation,
-                      answerTextAnimation: _answerTextSizeAnimation,
-                      history: ref
-                          .watch(historyControllerProvider)
-                          .toDomainList,
-                      answerListenable: _answerNotifier,
-                      onHistoryTap: (res) {
-                        final cleaned = res.replaceAll(',', '');
-                        if (_rawExpression.isNotEmpty &&
-                            CalcInputService.operatorRegex.hasMatch(
-                              _rawExpression.trim(),
-                            )) {
-                          _updateExpression(
-                            _rawExpression + cleaned,
-                            (_rawExpression + cleaned).length,
-                          );
-                        } else {
-                          _applyFormattedText(cleaned, cleaned.length);
-                          _answerNotifier.value = '';
-                          _smoothResetAnimation();
-                          _evaluate();
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 6,
-                  child: RepaintBoundary(
-                    child: CalcMenubar(
-                      onCopy: () =>
-                          CalcClipboard.copy(context, _answerNotifier.value),
-                      onPaste: _handlePaste,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 53,
-                  child: RepaintBoundary(
-                    child: ListenableBuilder(
-                      listenable: Listenable.merge([
-                        _isDegNotifier,
-                        _isShiftNotifier,
-                      ]),
-                      builder: (context, _) => CalcKeypad(
-                        symbols: CalcInputService.getKeypadSymbols(
-                          isShift: _isShiftNotifier.value,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 520.0;
+              final isCompact = MediaQuery.sizeOf(context).height < 750.0;
+
+              return ListenableBuilder(
+                listenable: Listenable.merge([
+                  _isVerticalNotifier,
+                  _isReducedKeypadNotifier,
+                ]),
+                builder: (context, _) {
+                  final isVertical = _isVerticalNotifier.value;
+                  final isReduced = _isReducedKeypadNotifier.value;
+
+                  // Locks 4x5 keypad height across both Basic and Tape mode to prevent layout jumps
+                  final (displayFlex, keypadFlex) = switch ((
+                    isVertical || isReduced,
+                    isCompact,
+                  )) {
+                    (true, true) => (42, 58),
+                    (true, false) => (55, 45),
+                    (false, true) => (25, 75),
+                    (false, false) => (42, 58),
+                  };
+
+                  return AnimatedAlign(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    alignment: isWide ? .centerRight : .center,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480.0),
+                      child: AnimatedPadding(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        padding: .fromLTRB(10.0, 4.0, 10.0, 10.0),
+                        child: Column(
+                          children: [
+                            // 1. Display: Adaptive size matrix & mini-history visibility
+                            Expanded(
+                              flex: displayFlex,
+                              child: RepaintBoundary(
+                                child: CalcDisplay(
+                                  isCompact: isCompact,
+                                  isVerticalMode: isVertical,
+                                  isReducedKeypad: isReduced,
+                                  inputController: _inputController,
+                                  scrollController: _inputScrollController,
+                                  animationController: _animationController,
+                                  inputTextAnimation: _inputTextSizeAnimation,
+                                  answerTextAnimation: _answerTextSizeAnimation,
+                                  history: ref
+                                      .watch(historyControllerProvider)
+                                      .entries,
+                                  answerListenable: _answerNotifier,
+                                  onHistoryTap: (res) {
+                                    final cleaned = res.replaceAll(',', '');
+                                    if (_rawExpression.isNotEmpty &&
+                                        CalcInputService.operatorRegex.hasMatch(
+                                          _rawExpression.trim(),
+                                        )) {
+                                      _updateExpression(
+                                        _rawExpression + cleaned,
+                                        (_rawExpression + cleaned).length,
+                                      );
+                                    } else {
+                                      _applyFormattedText(
+                                        cleaned,
+                                        cleaned.length,
+                                      );
+                                      _answerNotifier.value = '';
+                                      _smoothResetAnimation();
+                                      _evaluate();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            // 2. Menubar: Option B discrete toggles for 4x5 Keypad and Vertical Tape
+                            RepaintBoundary(
+                              child: CalcMenubar(
+                                isCompact: isCompact,
+                                isVerticalMode: isVertical,
+                                isReducedKeypad: isReduced,
+                                onToggleReducedKeypad: () {
+                                  if (_isReducedKeypadNotifier.value ||
+                                      _isVerticalNotifier.value) {
+                                    _isReducedKeypadNotifier.value = false;
+                                    _isVerticalNotifier.value = false;
+                                  } else {
+                                    _isReducedKeypadNotifier.value = true;
+                                  }
+                                },
+                                onToggleVertical: () {
+                                  _isVerticalNotifier.value =
+                                      !_isVerticalNotifier.value;
+                                },
+                                onCopy: () => CalcClipboard.copy(
+                                  context,
+                                  _answerNotifier.value,
+                                ),
+                                onPaste: _handlePaste,
+                              ),
+                            ),
+
+                            // 3. Keypad: AnimatedSwitcher morphs 5x7 and 4x5 matrices smoothly
+                            Expanded(
+                              flex: keypadFlex,
+                              child: RepaintBoundary(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 250),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, anim) =>
+                                      FadeTransition(
+                                        opacity: anim,
+                                        child: ScaleTransition(
+                                          scale: Tween<double>(
+                                            begin: 0.95,
+                                            end: 1.0,
+                                          ).animate(anim),
+                                          child: child,
+                                        ),
+                                      ),
+                                  child: ListenableBuilder(
+                                    key: ValueKey(isVertical || isReduced),
+                                    listenable: Listenable.merge([
+                                      _isDegNotifier,
+                                      _isShiftNotifier,
+                                    ]),
+                                    builder: (context, _) =>
+                                        (isVertical || isReduced)
+                                        ? CalcKeypad(
+                                            columns: 4,
+                                            rows: 5,
+                                            symbols: _verticalSymbols,
+                                            isDeg: _isDegNotifier.value,
+                                            isShift: false,
+                                            onKeyPressed: _onKeyPressed,
+                                          )
+                                        : CalcKeypad(
+                                            columns: 5,
+                                            rows: 7,
+                                            symbols:
+                                                CalcInputService.getKeypadSymbols(
+                                                  isShift:
+                                                      _isShiftNotifier.value,
+                                                ),
+                                            isDeg: _isDegNotifier.value,
+                                            isShift: _isShiftNotifier.value,
+                                            onKeyPressed: _onKeyPressed,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: isCompact ? 5.0 : 8.0),
+
+                            // 4. Flint Bottom Dock
+                            RepaintBoundary(
+                              child: CalcBottomNavNew(
+                                isCompact: isCompact,
+                                onNavAction: _onKeyPressed,
+                              ),
+                            ),
+                          ],
                         ),
-                        isDeg: _isDegNotifier.value,
-                        isShift: _isShiftNotifier.value,
-                        onKeyPressed: _onKeyPressed,
                       ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 6,
-                  child: RepaintBoundary(
-                    child: CalcBottomNavNew(onNavAction: _onKeyPressed),
-                  ),
-                ),
-              ],
-            ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ),

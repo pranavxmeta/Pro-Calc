@@ -1,0 +1,9 @@
+export 'rectangle.dart';
+export 'square.dart';
+export 'circle.dart';
+export 'triangle.dart';
+export 'trapezoid.dart';
+export '../screen/hexagon_shape_page.dart';
+export '../screen/parallelogram_shape_page.dart';
+export '../screen/rhombus_shape_page.dart';
+export '../screen/sphere_shape_page.dart';

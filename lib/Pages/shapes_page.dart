@@ -1,7 +1,7 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../feat/tool/Shape_Page/shape_page.dart';
+import '../feat/shape/Shape_Page/shape_page.dart';
 
 /// Screen hosting geometric shape calculation tools.
 ///
@@ -26,6 +26,14 @@ class const ShapesGridContent({super.key}) extends StatelessWidget {
     ('Circle', FluentIcons.circle_24_regular, Color(0xFFFF9500)),
     ('Triangle', FluentIcons.triangle_24_regular, Color(0xFFFF3B30)),
     ('Trapezoid', FluentIcons.triangle_24_regular, Color(0xFF5856D6)),
+    ('Sphere', FluentIcons.globe_24_regular, Color(0xFF00C7BE)),
+    (
+      'Parallelogram',
+      FluentIcons.shape_intersect_24_regular,
+      Color(0xFFAF52DE),
+    ),
+    ('Rhombus', FluentIcons.diamond_24_regular, Color(0xFFFF2D55)),
+    ('Hexagon', FluentIcons.hexagon_24_regular, Color(0xFFFFCC00)),
   ];
 
   void _navigateToShape(BuildContext context, String name) {
@@ -35,6 +43,10 @@ class const ShapesGridContent({super.key}) extends StatelessWidget {
       'Circle' => const CircleShapePage(),
       'Triangle' => const TriangleShapePage(),
       'Trapezoid' => const TrapezoidShapePage(),
+      'Sphere' => const SphereShapePage(),
+      'Parallelogram' => const ParallelogramShapePage(),
+      'Rhombus' => const RhombusShapePage(),
+      'Hexagon' => const HexagonShapePage(),
       _ => null,
     };
 
@@ -42,8 +54,8 @@ class const ShapesGridContent({super.key}) extends StatelessWidget {
 
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) => page,
-        transitionsBuilder: (_, animation, __, child) =>
+        pageBuilder: (_, animation, _) => page,
+        transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 200),
       ),

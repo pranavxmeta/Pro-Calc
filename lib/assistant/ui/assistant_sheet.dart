@@ -282,7 +282,7 @@ class _CupertinoQuickActions extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const .symmetric(horizontal: 16),
         itemCount: suggestions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final item = suggestions[i];
           return CupertinoButton(
@@ -291,8 +291,8 @@ class _CupertinoQuickActions extends StatelessWidget {
                 ? const Color(0xFF1E2228)
                 : CupertinoColors.systemBackground,
             borderRadius: .circular(16),
-            minSize: 32,
             onPressed: () => onSelected(item.query),
+            minimumSize: Size(32, 32),
             child: Text(
               item.label,
               style: TextStyle(
@@ -367,10 +367,10 @@ class _CupertinoInputDock extends StatelessWidget {
           const SizedBox(width: 8),
           CupertinoButton(
             padding: .zero,
-            minSize: 38,
             color: CupertinoTheme.of(context).primaryColor,
             borderRadius: .circular(19),
             onPressed: onSend,
+            minimumSize: Size(38, 38),
             child: const Icon(
               FluentIcons.arrow_up_20_filled,
               color: CupertinoColors.white,

@@ -1,12 +1,13 @@
 // lib/normcalc/business_logic/calc_view_model.dart
 
 import 'package:material_ui/material_ui.dart';
+
 import '../models/operation.dart';
 import '../utils/formatters.dart';
 import 'calc_engine.dart';
 
 final class CalcViewModel extends ChangeNotifier {
-  CalcViewModel({CalcEngine engine = const CalcEngine()}) : _engine = engine;
+  CalcViewModel({this._engine = const CalcEngine()});
 
   final CalcEngine _engine;
   final TextEditingController inputController = TextEditingController();

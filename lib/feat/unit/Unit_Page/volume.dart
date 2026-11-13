@@ -1,7 +1,7 @@
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:quantify/quantify.dart';
 
-import '../../../unit/model/units_info.dart';
+import '../model/units_info.dart';
 import '../../../Pages/base_converter_page.dart';
 
 class VolumeConverterPage extends StatelessWidget {

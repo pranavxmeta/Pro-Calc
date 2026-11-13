@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
-import 'model/calculation_history.dart';
 import 'data.dart';
 
 class HistoryState {
@@ -14,17 +13,6 @@ class HistoryState {
   final List<CalculationHistoryEntry> entries;
   final bool isLoadingMore;
   final bool hasMore;
-
-  /// Domain model adapter for zero-break compatibility with legacy widgets.
-  List<CalculationHistory> get toDomainList => entries
-      .map(
-        (e) => CalculationHistory(
-          expression: e.expression,
-          result: e.result,
-          timestamp: e.createdAt,
-        ),
-      )
-      .toList();
 
   HistoryState copyWith({
     List<CalculationHistoryEntry>? entries,

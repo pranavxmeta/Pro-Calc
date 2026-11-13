@@ -54,7 +54,7 @@ class const ToolsTabGridContent({super.key}) extends StatelessWidget {
   void _navigateToTool(BuildContext context, Widget page) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) => page,
+        pageBuilder: (_, animation, _) => page,
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 200),

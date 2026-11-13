@@ -1,220 +1,252 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../feat/history/model/calculation_history.dart';
+import '../../core/database/app_database.dart';
 
-/// Expression input, animated answer, and mini-history scroll strip.
-/// Isolates answer updates to prevent TextField rebuild jitter,
-/// synchronizes trailing scroll post-frame, and renders multi-axis GPU result transitions.
-class CalcDisplay extends StatefulWidget {
-  const CalcDisplay({
-    super.key,
-    required this.inputController,
-    required this.scrollController,
-    required this.animationController,
-    required this.inputTextAnimation,
-    required this.answerTextAnimation,
-    required this.history,
-    required this.answerListenable,
-    required this.onHistoryTap,
-  });
-
-  final TextEditingController inputController;
-  final ScrollController scrollController;
-  final AnimationController animationController;
-  final Animation<double> inputTextAnimation;
-  final Animation<double> answerTextAnimation;
-  final List<CalculationHistory> history;
-  final ValueListenable<String> answerListenable;
-  final ValueChanged<String> onHistoryTap;
-
+class const CalcDisplay({
+  super.key,
+  final bool isCompact = false,
+  final bool isVerticalMode = false,
+  final bool isReducedKeypad = false,
+  required final TextEditingController inputController,
+  required final ScrollController scrollController,
+  required final AnimationController animationController,
+  required final Animation<double> inputTextAnimation,
+  required final Animation<double> answerTextAnimation,
+  required final List<CalculationHistoryEntry> history,
+  required final ValueListenable<String> answerListenable,
+  required final ValueChanged<String> onHistoryTap,
+}) extends StatefulWidget {
   @override
   State<CalcDisplay> createState() => _CalcDisplayState();
 }
 
 class _CalcDisplayState extends State<CalcDisplay> {
-  late final Animation<Offset> _answerSlideAnimation;
-  late final Animation<double> _answerFadeAnimation;
-  late final Animation<double> _inputFadeAnimation;
-
   @override
   void initState() {
     super.initState();
-
-    _answerSlideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.16), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: widget.animationController,
-            curve: Curves.fastOutSlowIn,
-          ),
-        );
-
-    _answerFadeAnimation = Tween<double>(begin: 0.65, end: 1.0).animate(
-      CurvedAnimation(
-        parent: widget.animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    _inputFadeAnimation = Tween<double>(begin: 1.0, end: 0.65).animate(
-      CurvedAnimation(
-        parent: widget.animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    widget.inputController.addListener(_handleTextChange);
+    widget.inputController.addListener(_scrollTrailing);
   }
 
   @override
   void didUpdateWidget(CalcDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.inputController != widget.inputController) {
-      oldWidget.inputController.removeListener(_handleTextChange);
-      widget.inputController.addListener(_handleTextChange);
+      oldWidget.inputController.removeListener(_scrollTrailing);
+      widget.inputController.addListener(_scrollTrailing);
     }
   }
 
   @override
   void dispose() {
-    widget.inputController.removeListener(_handleTextChange);
+    widget.inputController.removeListener(_scrollTrailing);
     super.dispose();
   }
 
-  /// Trailing lock: guarantees zero horizontal wobbling as numbers are typed.
-  void _handleTextChange() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          widget.scrollController.hasClients &&
-          widget.scrollController.position.maxScrollExtent > 0) {
-        widget.scrollController.jumpTo(
-          widget.scrollController.position.maxScrollExtent,
-        );
-      }
-    });
-  }
+  void _scrollTrailing() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted &&
+        widget.scrollController.hasClients &&
+        widget.scrollController.position.maxScrollExtent > 0) {
+      widget.scrollController.jumpTo(
+        widget.scrollController.position.maxScrollExtent,
+      );
+    }
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.sizeOf(context);
+    final isCompact = widget.isCompact;
+    final isVertical = widget.isVerticalMode;
+    final isReduced = widget.isReducedKeypad;
+    final anim = widget.animationController;
 
-    final baseInputSize = (size.height * 0.045).clamp(28.0, 52.0);
-    final baseAnswerSize = (size.height * 0.042).clamp(24.0, 48.0);
+    // Chained animation drives: type-safe and zero multi-line bloat
+    final slideAnim = anim.drive(
+      Tween<Offset>(
+        begin: const Offset(0, 0.16),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.fastOutSlowIn)),
+    );
+    final fadeAnim = anim.drive(
+      Tween<double>(
+        begin: 0.65,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+    );
+    final inputFade = anim.drive(
+      Tween<double>(
+        begin: 1.0,
+        end: 0.65,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+    );
+
+    // Declarative 3-tuple matrix resolving dimensions & history line quotas
+    final (baseInputSize, baseAnswerSize, maxVisible) = switch ((
+      isVertical,
+      isReduced,
+      isCompact,
+    )) {
+      // Tape Mode: mini-history hidden (0) to dedicate height to multi-line ledger
+      (true, _, true) => (22.0, 24.0, 0),
+      (true, _, false) => (30.0, 38.0, 0),
+
+      // Normal Mode with Reduced 4x5 Keypad:
+      // 5-row matrix leaves enough vertical height to show 2 history items even on compact screens!
+      (false, true, true) => (28.0, 24.0, 2),
+      (false, true, false) => (40.0, 38.0, 4),
+
+      // Normal Mode with Full 5x7 Scientific Keypad:
+      (false, false, true) => (28.0, 24.0, 0),
+      (false, false, false) => (44.0, 38.0, 4),
+    };
+
+    final historyItems = widget.history.take(10).toList();
+    final lineHeight = isCompact ? 25.0 : 30.0;
+    final historyHeight =
+        math.min(historyItems.length, maxVisible) * lineHeight;
+    final showHistory = maxVisible > 0 && historyItems.isNotEmpty;
 
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: size.width * 0.03,
-          vertical: size.height * 0.01,
-        ),
-        alignment: Alignment.bottomRight,
+        padding: .only(top: 8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
+          spacing: isCompact ? 2.0 : 4.0,
+          crossAxisAlignment: .end,
           children: [
-            // Mini-history preview items (overflow-safe horizontal scroll strip)
-            for (final entry in widget.history.take(3).toList().reversed)
-              Padding(
-                padding: EdgeInsets.only(bottom: size.height * 0.008),
-                child: GestureDetector(
-                  onTap: () => widget.onHistoryTap(entry.result),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    child: Text(
-                      '${entry.expression} = ${entry.result}',
-                      style: TextStyle(
-                        fontFamily: 'RedditSans',
-                        fontWeight: FontWeight.w400,
-                        fontSize: (size.height * 0.020).clamp(12.0, 18.0),
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
-                        ),
-                      ),
-                      maxLines: 1,
-                    ),
-                  ),
-                ),
-              ),
-
-            // Isolated Input Field: Never rebuilds when live evaluation answers update
-            FadeTransition(
-              opacity: _inputFadeAnimation,
-              child: ScaleTransition(
-                scale: widget.inputTextAnimation,
-                alignment: Alignment.centerRight,
-                child: TextField(
-                  controller: widget.inputController,
-                  scrollController: widget.scrollController,
-                  readOnly: true,
-                  showCursor: true,
-                  cursorColor: theme.colorScheme.primary,
-                  cursorWidth: 2.0,
-                  cursorRadius: const Radius.circular(1.0),
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontFamily: 'RedditSans',
-                    fontWeight: FontWeight.w400,
-                    fontSize: baseInputSize,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  maxLines: 1,
-                ),
-              ),
-            ),
-
-            SizedBox(height: size.height * 0.01),
-
-            // Isolated Answer View: ONLY this sub-tree rebuilds during live keystroke evaluation
-            ValueListenableBuilder<String>(
-              valueListenable: widget.answerListenable,
-              builder: (context, answer, _) {
-                final isError =
-                    answer == 'Error' || answer.contains('Infinity');
-
-                return SlideTransition(
-                  position: _answerSlideAnimation,
-                  child: FadeTransition(
-                    opacity: _answerFadeAnimation,
-                    child: ScaleTransition(
-                      scale: widget.answerTextAnimation,
-                      alignment: Alignment.centerRight,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true,
-                        physics: const BouncingScrollPhysics(),
-                        child: Text(
-                          answer,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontFamily: 'RedditSans',
-                            fontWeight: FontWeight.w400,
-                            fontSize: baseAnswerSize,
-                            color: isError
-                                ? theme.colorScheme.error
-                                : theme.colorScheme.onSurface,
+            if (showHistory)
+              SizedBox(
+                height: historyHeight,
+                child: ListView.builder(
+                  padding: .zero,
+                  reverse: true,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: historyItems.length,
+                  itemExtent: lineHeight,
+                  itemBuilder: (context, index) {
+                    final entry = historyItems[index];
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => widget.onHistoryTap(entry.result),
+                      child: Align(
+                        alignment: .centerRight,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          reverse: true,
+                          physics: const BouncingScrollPhysics(),
+                          child: Text(
+                            '${entry.expression} = ${entry.result}',
+                            style: TextStyle(
+                              fontFamily: 'RedditSans',
+                              fontSize: isCompact ? 12.0 : 15.0,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            maxLines: 1,
                           ),
                         ),
                       ),
+                    );
+                  },
+                ),
+              ),
+
+            if (!isVertical) const Spacer(),
+
+            _CalcInputField(
+              controller: widget.inputController,
+              scrollController: widget.scrollController,
+              fadeAnimation: inputFade,
+              scaleAnimation: widget.inputTextAnimation,
+              fontSize: baseInputSize,
+              isVertical: isVertical,
+            ).expandedIf(isVertical),
+
+            ValueListenableBuilder<String>(
+              valueListenable: widget.answerListenable,
+              builder: (context, answer, _) => SlideTransition(
+                position: slideAnim,
+                child: FadeTransition(
+                  opacity: fadeAnim,
+                  child: ScaleTransition(
+                    scale: widget.answerTextAnimation,
+                    alignment: .centerRight,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      physics: const BouncingScrollPhysics(),
+                      child: Text(
+                        answer,
+                        textAlign: .right,
+                        style: TextStyle(
+                          fontFamily: 'RedditSans',
+                          fontSize: baseAnswerSize,
+                          color:
+                              (answer == 'Error' || answer.contains('Infinity'))
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.onSurface,
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
-
-            SizedBox(height: size.height * 0.01),
           ],
         ),
       ),
     );
   }
+}
+
+class const _CalcInputField({
+  required final TextEditingController controller,
+  required final ScrollController scrollController,
+  required final Animation<double> fadeAnimation,
+  required final Animation<double> scaleAnimation,
+  required final double fontSize,
+  required final bool isVertical,
+}) extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: fadeAnimation,
+    child: ScaleTransition(
+      scale: scaleAnimation,
+      alignment: Alignment.centerRight,
+      child: Align(
+        alignment: Alignment.bottomRight,
+        child: TextField(
+          controller: controller,
+          scrollController: scrollController,
+          readOnly: true,
+          showCursor: true,
+          cursorColor: Theme.of(context).colorScheme.primary,
+          cursorWidth: 2.0,
+          cursorRadius: const Radius.circular(1.0),
+          textAlign: TextAlign.right,
+          maxLines: isVertical ? null : 1,
+          style: TextStyle(
+            fontFamily: 'RedditSans',
+            fontSize: fontSize,
+            height: 1.25,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+extension on Widget {
+  Widget expandedIf(bool condition, {int flex = 1}) =>
+      condition ? Expanded(flex: flex, child: this) : this;
 }
