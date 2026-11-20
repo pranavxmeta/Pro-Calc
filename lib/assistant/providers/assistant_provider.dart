@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../calc/utils/calc_evaluator.dart';
+import '../../feat/calc/utils/calc_evaluator.dart';
 import '../../notes/database/notes_database.dart';
 import '../models/assistant_state.dart';
 import '../services/edge_ai_service.dart';

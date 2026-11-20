@@ -7,7 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exath_engine/exath_engine.dart';
-import 'package:pro_calc/calc/calc_page.dart';
+import 'package:pro_calc/feat/calc/calc_page.dart';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
 import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
 

@@ -6,10 +6,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pro_calc/feat/calc/service/calc_input_service.dart';
 import 'package:pro_calc/feat/history/state.dart';
 
-import '../feat/history/widget/history_sheet.dart';
-import '../feat/settings/screen.dart';
-import '../feat/settings/state.dart';
-import '../feat/tool/widget/tools_sheet.dart';
+import '../history/widget/history_sheet.dart';
+import '../settings/screen.dart';
+import '../settings/state.dart';
+import '../tool/widget/tools_sheet.dart';
 import 'utils/calc_clipboard.dart';
 import 'utils/calc_evaluator.dart';
 import 'utils/expression_formatter.dart';
