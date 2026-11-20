@@ -98,8 +98,9 @@ class TrapezoidShapePage extends StatelessWidget {
 
       // 3. Extrusion: Volume = Base Area * Depth
       if ((a, depth) case (double area, double d)) v = assign(v, area * d);
-      if ((a, v) case (double area, double vol))
+      if ((a, v) case (double area, double vol)) {
         depth = assign(depth, vol / area);
+      }
       if ((depth, v) case (double d, double vol)) a = assign(a, vol / d);
 
       safetyPass++;

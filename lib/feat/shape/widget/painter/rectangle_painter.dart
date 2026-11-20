@@ -1,5 +1,4 @@
 // lib/feat/shape/widget/painter/rectangle_painter.dart
-import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 class RectanglePainter extends CustomPainter {

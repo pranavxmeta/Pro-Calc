@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../calc/utils/calc_evaluator.dart';
 import '../../notes/database/notes_database.dart';
 import '../../notes/model/note_item.dart';
 

@@ -61,18 +61,23 @@ class TriangleShapePage extends StatelessWidget {
       }
 
       // 3. Triangle Base/Height/Area trio (Area = 0.5 * Base * Height)
-      if ((base, height) case (double b, double h))
+      if ((base, height) case (double b, double h)) {
         area = assign(area, 0.5 * b * h);
-      if ((base, area) case (double b, double a))
+      }
+      if ((base, area) case (double b, double a)) {
         height = assign(height, (2 * a) / b);
-      if ((height, area) case (double h, double a))
+      }
+      if ((height, area) case (double h, double a)) {
         base = assign(base, (2 * a) / h);
+      }
 
       // 4. Extrusion: Volume = Base Area * Depth
-      if ((area, depth) case (double a, double d))
+      if ((area, depth) case (double a, double d)) {
         volume = assign(volume, a * d);
-      if ((area, volume) case (double a, double v))
+      }
+      if ((area, volume) case (double a, double v)) {
         depth = assign(depth, v / a);
+      }
       if ((depth, volume) case (double d, double v)) area = assign(area, v / d);
 
       safetyPass++;

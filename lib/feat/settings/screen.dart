@@ -267,7 +267,6 @@ class const SettingsScreen({super.key, required final VoidCallback onClose})
 
 /// Action item pill with crisp 1px borders matching the Shadcn design.
 class const _ActionButton({
-  super.key,
   required final _SettingsAction item,
   required final Color defaultBg,
   required final Color borderColor,

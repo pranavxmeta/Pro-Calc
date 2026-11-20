@@ -47,12 +47,15 @@ class RhombusShapePage extends StatelessWidget {
       if (p case double perim) s = assign(s, perim / 4);
 
       // 2. Area = (d1 * d2) / 2
-      if ((d1, d2) case (double diag1, double diag2))
+      if ((d1, d2) case (double diag1, double diag2)) {
         a = assign(a, (diag1 * diag2) / 2);
-      if ((a, d1) case (double area, double diag1))
+      }
+      if ((a, d1) case (double area, double diag1)) {
         d2 = assign(d2, (2 * area) / diag1);
-      if ((a, d2) case (double area, double diag2))
+      }
+      if ((a, d2) case (double area, double diag2)) {
         d1 = assign(d1, (2 * area) / diag2);
+      }
 
       // 3. Side and Diagonals Pythagorean: s^2 = (d1/2)^2 + (d2/2)^2
       if ((d1, d2) case (double diag1, double diag2)) {
@@ -76,8 +79,9 @@ class RhombusShapePage extends StatelessWidget {
 
       // 4. Extrusion Volume = Base Area * Depth
       if ((a, depth) case (double area, double d)) v = assign(v, area * d);
-      if ((a, v) case (double area, double vol))
+      if ((a, v) case (double area, double vol)) {
         depth = assign(depth, vol / area);
+      }
       if ((depth, v) case (double d, double vol)) a = assign(a, vol / d);
 
       safetyPass++;

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class UnitSelectorBar extends StatelessWidget {
@@ -23,7 +23,7 @@ class UnitSelectorBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: units.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6.0),
+        separatorBuilder: (_, _) => const SizedBox(width: 6.0),
         itemBuilder: (context, index) {
           final unit = units[index];
           final isSelected = unit == activeUnit;

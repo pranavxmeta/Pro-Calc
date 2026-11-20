@@ -113,7 +113,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                   padding: const .only(bottom: 24.0, left: 2.0, right: 2.0),
                   itemCount:
                       entries.length + (historyState.isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10.0),
                   itemBuilder: (context, index) {
                     // Bottom pagination indicator
                     if (index == entries.length) {

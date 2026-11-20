@@ -30,8 +30,8 @@ dependencies:
   # The core Flutter framework includes Material widgets.
   # material: ^0.0.1 # Removed - this is unnecessary and likely the wrong package.
 
-  cupertino_icons: ^1.0.2
-  google_fonts: ^8.0.2
+  cupertino_icons: ^2.0.0
+  google_fonts: ^9.0.0
   fluentui_system_icons: ^1.1.229
   # Math evaluation is handled entirely by the exath_engine plugin (above).
   # Removed: eval_ex, function_tree, math_expressions.

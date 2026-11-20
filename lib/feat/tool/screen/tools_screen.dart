@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
@@ -11,7 +10,7 @@ import '../../../Pages/tools_tab_page.dart';
 ///
 /// Features independent floating glass tab pills (no enclosing outer box),
 /// compact squircle tiles in an ergonomic 4-column grid, and bold crisp typography.
-class ToolsScreen({super.key, final bool isModal = false})
+class const ToolsScreen({super.key, final bool isModal = false})
     extends StatefulWidget {
   @override
   State<ToolsScreen> createState() => _ToolsScreenState();
@@ -191,8 +190,8 @@ class _ToolsGridContent extends StatelessWidget {
 
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) => page,
-        transitionsBuilder: (_, animation, __, child) =>
+        pageBuilder: (_, animation, _) => page,
+        transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 200),
       ),

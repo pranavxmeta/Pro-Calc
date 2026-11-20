@@ -66,8 +66,9 @@ class RectangleShapePage extends StatelessWidget {
       }
 
       // 4. Extrusion Volume <-> Base Area * Height
-      if ((a, h) case (double area, double height))
+      if ((a, h) case (double area, double height)) {
         v = assign(v, area * height);
+      }
       if ((a, v) case (double area, double vol)) h = assign(h, vol / area);
       if ((h, v) case (double height, double vol)) a = assign(a, vol / height);
 

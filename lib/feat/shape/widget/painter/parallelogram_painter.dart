@@ -1,7 +1,6 @@
 // lib/feat/shape/widget/painter/parallelogram_painter.dart
 import 'dart:math' as math;
 
-import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ParallelogramPainter extends CustomPainter {

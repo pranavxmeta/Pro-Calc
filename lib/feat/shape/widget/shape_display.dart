@@ -1,5 +1,4 @@
 // lib/feat/shape/widget/shape_display.dart
-import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Container housing the textbook-style CustomPainter diagram
