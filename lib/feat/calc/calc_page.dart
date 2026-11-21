@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:exath_engine/exath_engine.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import '../settings/state.dart';
 import '../tool/widget/tools_sheet.dart';
 import 'utils/calc_clipboard.dart';
 import 'utils/calc_evaluator.dart';
+import 'utils/calc_text_controller.dart';
 import 'utils/expression_formatter.dart';
 import 'widget/bottom_nav.dart';
 import 'widget/calc_display.dart';
@@ -19,8 +22,8 @@ import 'widget/calc_keypad.dart';
 import 'widget/kmathcon.dart';
 import 'widget/menubar.dart';
 
-/// Calculator controller screen with snappy transitions,
-/// decoupled input parsing, responsive layout scaling, and Option B dual-mode toggling.
+/// Calculator controller screen with responsive layout scaling,
+/// dual-mode toggling, and persistent live subtotal calculations.
 class CalcPage extends ConsumerStatefulWidget {
   const CalcPage({super.key});
 
@@ -30,7 +33,7 @@ class CalcPage extends ConsumerStatefulWidget {
 
 class _CalcPageState extends ConsumerState<CalcPage>
     with SingleTickerProviderStateMixin {
-  late final TextEditingController _inputController;
+  late final CalcTextEditingController _inputController;
   late final ScrollController _inputScrollController;
   late final AnimationController _animationController;
   late final Animation<double> _inputTextSizeAnimation;
@@ -75,15 +78,15 @@ class _CalcPageState extends ConsumerState<CalcPage>
   @override
   void initState() {
     super.initState();
-    _inputController = TextEditingController();
+    _inputController = CalcTextEditingController();
     _inputScrollController = ScrollController();
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 220),
     );
 
-    _inputTextSizeAnimation = Tween<double>(begin: 1.0, end: 0.74).animate(
+    _inputTextSizeAnimation = Tween<double>(begin: 1.0, end: 0.65).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeOutCubic,
@@ -91,10 +94,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
       ),
     );
 
-    _answerTextSizeAnimation = Tween<double>(begin: 0.84, end: 1.26).animate(
+    _answerTextSizeAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: Curves.easeOutCubic,
+        curve: Curves.easeOutBack,
         reverseCurve: Curves.easeInCubic,
       ),
     );
@@ -130,7 +133,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
     );
   }
 
-  // --- Evaluation Engine ---
+  // --- Persistent Evaluation Engine ---
   void _evaluate({bool finalEvaluation = false}) {
     final cleanExpr = _rawExpression.replaceAll('\n', ' ').trim();
 
@@ -139,22 +142,48 @@ class _CalcPageState extends ConsumerState<CalcPage>
       return;
     }
 
-    if (!finalEvaluation && CalcEvaluator.shouldSkipLiveEvaluation(cleanExpr)) {
+    // Suppress preview when typing the first standalone scalar number
+    if (!finalEvaluation &&
+        RegExp(r'^-?\d*\.?\d+$').hasMatch(cleanExpr.replaceAll(',', ''))) {
       _answerNotifier.value = '';
       return;
     }
 
+    final locale = ref.read(settingsProvider.select((s) => s.numberLocale));
+    final numFormat = _getNumberFormat(locale);
+
+    // Prepare evaluable expression for live preview:
+    // Strip trailing operators so the running subtotal remains visible
+    var evaluableExpr = cleanExpr;
+    if (!finalEvaluation) {
+      evaluableExpr = evaluableExpr.replaceFirst(RegExp(r'[+\-*/×÷^ ]+$'), '');
+
+      // Auto-balance unclosed parentheses for live preview
+      int openCount = 0;
+      for (int i = 0; i < evaluableExpr.length; i++) {
+        if (evaluableExpr[i] == '(') openCount++;
+        if (evaluableExpr[i] == ')') openCount = math.max(0, openCount - 1);
+      }
+      evaluableExpr = evaluableExpr + (')' * openCount);
+    }
+
+    if (evaluableExpr.isEmpty) {
+      return; // Retain previous valid answer
+    }
+
     try {
-      final locale = ref.read(settingsProvider.select((s) => s.numberLocale));
       final result = CalcEvaluator.evaluate(
-        rawExpression: cleanExpr,
+        rawExpression: evaluableExpr,
         isDeg: _isDegNotifier.value,
         variables: _variables,
-        numberFormat: _getNumberFormat(locale),
+        numberFormat: numFormat,
       );
       _answerNotifier.value = result;
     } catch (_) {
-      _answerNotifier.value = finalEvaluation ? 'Error' : '';
+      if (finalEvaluation) {
+        _answerNotifier.value = 'Error';
+      }
+      // On live syntax transitions, retain the existing subtotal so it never hides
     }
   }
 
@@ -162,13 +191,15 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final cleanRaw = newRaw.replaceAll(',', '');
     final locale = ref.read(settingsProvider.select((s) => s.numberLocale));
     final numFormat = _getNumberFormat(locale);
+    final isVertical = _isVerticalNotifier.value;
 
-    final formattedText = cleanRaw.contains('\n')
-        ? cleanRaw
-              .split('\n')
-              .map((line) => ExpressionFormatter.format(line, numFormat))
-              .join('\n')
-        : ExpressionFormatter.format(cleanRaw, numFormat);
+    _inputController.isVerticalMode = isVertical;
+
+    final formattedText = ExpressionFormatter.format(
+      cleanRaw,
+      numFormat,
+      isVertical: isVertical,
+    );
 
     _rawExpression = cleanRaw;
 
@@ -248,52 +279,10 @@ class _CalcPageState extends ConsumerState<CalcPage>
     '(' ||
     ')' ||
     '!' => () => _handleSpecialFunctions(key),
-    // Guarded pattern matching: only vertical tape mode intercepts operators with newlines
-    '+' when _isVerticalNotifier.value => () => _handleVerticalOperator('+'),
-    '-' when _isVerticalNotifier.value => () => _handleVerticalOperator('-'),
     '+' => _isShiftNotifier.value ? _handleNegate : () => _handleOperator('+'),
     '-' || '×' || '÷' => () => _handleOperator(key),
     _ => () => _handleStandardInput(key),
   }();
-
-  void _handleVerticalOperator(String op) {
-    final currentAns = _answerNotifier.value;
-
-    if (_lastActionWasEval &&
-        currentAns.isNotEmpty &&
-        currentAns != 'Error' &&
-        !currentAns.contains('Infinity')) {
-      final cleanAns = currentAns.replaceAll(',', '');
-      _lastActionWasEval = false;
-      final newExpr = '$cleanAns\n$op ';
-      _applyFormattedText(newExpr, newExpr.length);
-      _smoothResetAnimation();
-      _evaluate();
-      return;
-    }
-
-    if (_rawExpression.trim().isEmpty) {
-      if (op == '-') _updateExpression('-', 1);
-      return;
-    }
-
-    final trimmed = _rawExpression.trimRight();
-    if (trimmed.endsWith('+') ||
-        trimmed.endsWith('-') ||
-        trimmed.endsWith('×') ||
-        trimmed.endsWith('÷')) {
-      final lastOpIndex = _rawExpression.lastIndexOf(RegExp(r'[+\-×÷]'));
-      if (lastOpIndex != -1) {
-        final updated = '${_rawExpression.substring(0, lastOpIndex)}$op ';
-        _updateExpression(updated, updated.length);
-        return;
-      }
-    }
-
-    final prefix = _rawExpression.endsWith('\n') ? '' : '\n';
-    final updated = '$_rawExpression$prefix$op ';
-    _updateExpression(updated, updated.length);
-  }
 
   void _handleClearAll() {
     HapticFeedback.mediumImpact();
@@ -327,20 +316,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
     final rawPos = _getRawCursorPosition();
 
     if (rawPos > 0) {
-      if (_isVerticalNotifier.value && rawPos >= 3) {
-        final before = _rawExpression.substring(0, rawPos);
-        if (before.endsWith('\n+ ') ||
-            before.endsWith('\n- ') ||
-            before.endsWith('\n× ') ||
-            before.endsWith('\n÷ ')) {
-          final updated =
-              _rawExpression.substring(0, rawPos - 3) +
-              _rawExpression.substring(rawPos);
-          _updateExpression(updated, rawPos - 3);
-          return;
-        }
-      }
-
       final updated =
           _rawExpression.substring(0, rawPos - 1) +
           _rawExpression.substring(rawPos);
@@ -486,7 +461,8 @@ class _CalcPageState extends ConsumerState<CalcPage>
       expression: _rawExpression,
       cursor: _getRawCursorPosition(),
       token: func,
-      isSuffixFunctionOrConstant: key != ')' && key != '!',
+      // Prevents '(' from auto-injecting '×'
+      isSuffixFunctionOrConstant: key != '(' && key != ')' && key != '!',
     );
     _updateExpression(res.expression, res.cursor);
   }
@@ -590,7 +566,6 @@ class _CalcPageState extends ConsumerState<CalcPage>
                   final isVertical = _isVerticalNotifier.value;
                   final isReduced = _isReducedKeypadNotifier.value;
 
-                  // Locks 4x5 keypad height across both Basic and Tape mode to prevent layout jumps
                   final (displayFlex, keypadFlex) = switch ((
                     isVertical || isReduced,
                     isCompact,
@@ -654,7 +629,7 @@ class _CalcPageState extends ConsumerState<CalcPage>
                               ),
                             ),
 
-                            // 2. Menubar: Option B discrete toggles for 4x5 Keypad and Vertical Tape
+                            // 2. Menubar: Discrete toggles with instant display refresh
                             RepaintBoundary(
                               child: CalcMenubar(
                                 isCompact: isCompact,
@@ -668,10 +643,18 @@ class _CalcPageState extends ConsumerState<CalcPage>
                                   } else {
                                     _isReducedKeypadNotifier.value = true;
                                   }
+                                  _applyFormattedText(
+                                    _rawExpression,
+                                    _getRawCursorPosition(),
+                                  );
                                 },
                                 onToggleVertical: () {
                                   _isVerticalNotifier.value =
                                       !_isVerticalNotifier.value;
+                                  _applyFormattedText(
+                                    _rawExpression,
+                                    _getRawCursorPosition(),
+                                  );
                                 },
                                 onCopy: () => CalcClipboard.copy(
                                   context,

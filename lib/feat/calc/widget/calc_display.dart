@@ -63,16 +63,22 @@ class _CalcDisplayState extends State<CalcDisplay> {
     final isReduced = widget.isReducedKeypad;
     final anim = widget.animationController;
 
-    // Chained animation drives: type-safe and zero multi-line bloat
+    // Kinetic float & elevate drives
+    final inputSlide = anim.drive(
+      Tween<Offset>(
+        begin: Offset.zero,
+        end: const Offset(0, -0.08),
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+    );
     final slideAnim = anim.drive(
       Tween<Offset>(
-        begin: const Offset(0, 0.16),
+        begin: const Offset(0, 0.20),
         end: Offset.zero,
-      ).chain(CurveTween(curve: Curves.fastOutSlowIn)),
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
     );
     final fadeAnim = anim.drive(
       Tween<double>(
-        begin: 0.65,
+        begin: 0.50,
         end: 1.0,
       ).chain(CurveTween(curve: Curves.easeOutCubic)),
     );
@@ -112,6 +118,7 @@ class _CalcDisplayState extends State<CalcDisplay> {
     return Material(
       color: Colors.transparent,
       child: Container(
+        width: double.infinity,
         padding: .only(top: 8.0),
         child: Column(
           spacing: isCompact ? 2.0 : 4.0,
@@ -161,7 +168,7 @@ class _CalcDisplayState extends State<CalcDisplay> {
               controller: widget.inputController,
               scrollController: widget.scrollController,
               fadeAnimation: inputFade,
-              scaleAnimation: widget.inputTextAnimation,
+              slideAnimation: inputSlide,
               fontSize: baseInputSize,
               isVertical: isVertical,
             ).expandedIf(isVertical),
@@ -207,38 +214,46 @@ class const _CalcInputField({
   required final TextEditingController controller,
   required final ScrollController scrollController,
   required final Animation<double> fadeAnimation,
-  required final Animation<double> scaleAnimation,
+  required final Animation<Offset> slideAnimation,
   required final double fontSize,
   required final bool isVertical,
 }) extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => FadeTransition(
-    opacity: fadeAnimation,
-    child: ScaleTransition(
-      scale: scaleAnimation,
-      alignment: Alignment.centerRight,
-      child: Align(
-        alignment: Alignment.bottomRight,
-        child: TextField(
-          controller: controller,
-          scrollController: scrollController,
-          readOnly: true,
-          showCursor: true,
-          cursorColor: Theme.of(context).colorScheme.primary,
-          cursorWidth: 2.0,
-          cursorRadius: const Radius.circular(1.0),
-          textAlign: TextAlign.right,
-          maxLines: isVertical ? null : 1,
-          style: TextStyle(
-            fontFamily: 'RedditSans',
-            fontSize: fontSize,
-            height: 1.25,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.zero,
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    child: SlideTransition(
+      position: slideAnimation,
+      child: FadeTransition(
+        opacity: fadeAnimation,
+        child: Align(
+          alignment: Alignment.bottomRight,
+          child: SizedBox(
+            width: double.infinity,
+            child: TextField(
+              controller: controller,
+              scrollController: scrollController,
+              readOnly: true,
+              showCursor: true,
+              cursorColor: Theme.of(context).colorScheme.primary,
+              cursorWidth: 2.0,
+              cursorRadius: const Radius.circular(1.0),
+              textAlign: TextAlign.right,
+              maxLines: isVertical ? null : 1,
+              style: TextStyle(
+                fontFamily: 'RedditSans',
+                fontSize: fontSize,
+                height: 1.35,
+                fontFeatures: [
+                  if (isVertical) const FontFeature.tabularFigures(),
+                ],
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
           ),
         ),
       ),

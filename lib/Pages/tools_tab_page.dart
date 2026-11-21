@@ -1,8 +1,6 @@
-
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pro_calc/assistant/ui/assistant_sheet.dart';
-import 'package:pro_calc/normcalc/ui/normcalc_app.dart';
 
 import '../feat/tool/Tools_Page/tools_page.dart';
 
@@ -35,7 +33,12 @@ class const ToolsTabGridContent({super.key}) extends StatelessWidget {
         modelUrl: 'https://huggingface.co/litert-community/SmolLM2-360M-Instruct/resolve/main/SmolLM2_360M_instruct.litertlm',
       ),
     ),
-    ('BMI', FluentIcons.person_24_regular, Color(0xFF00C7BE), NormCalcApp()),
+    (
+      'BMI',
+      FluentIcons.person_24_regular,
+      Color(0xFF00C7BE),
+      FuelCostCalcPage(),
+    ),
     (
       'Fuel Cost',
       FluentIcons.gas_pump_24_regular,

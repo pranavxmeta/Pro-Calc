@@ -1,15 +1,14 @@
 import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:exath_engine/exath_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
-// import 'package:flutter_displaymode/flutter_displaymode.dart';
-// import 'package:pro_calc/Pages/calc_page.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:exath_engine/exath_engine.dart';
-import 'package:pro_calc/feat/calc/calc_page.dart';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
 import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:pro_calc/feat/calc/calc_page.dart';
+import 'package:pro_calc/feat/settings/state.dart';
 
 import 'core/theme/app_theme.dart';
 
@@ -18,9 +17,6 @@ Future<void> initializeApp() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     await FlutterEdgeAi.initialize(inferenceEngines: const [LiteRtLmEngine()]);
-    // if (Platform.isAndroid) {
-    //   await FlutterDisplayMode.setHighRefreshRate();
-    // }
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
@@ -34,14 +30,25 @@ void main() async {
     await ensureInitialized();
     debugPrint('engine start');
 
-    runApp(const ProviderScope(child: ProCalc()));
+    // Pre-warm version info once at startup so modal sheets never hit native IPC
+    String versionString = 'Pro Calc';
+    try {
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      versionString = 'Pro Calc v${packageInfo.version}';
+    } catch (_) {}
+
+    runApp(
+      ProviderScope(
+        overrides: [appVersionProvider.overrideWithValue(versionString)],
+        child: const ProCalc(),
+      ),
+    );
   } catch (e) {
     debugPrint('Fatal error during app startup: $e');
     rethrow;
   }
 }
 
-// lib/main.dart
 class ProCalc extends ConsumerWidget {
   const ProCalc({super.key});
 
@@ -56,6 +63,7 @@ class ProCalc extends ConsumerWidget {
 
     final orientation = MediaQuery.orientationOf(context);
 
+    // Reserved for future experiment purposes
     final Widget homeContent = (kIsWeb && orientation == Orientation.landscape)
         ? const Scaffold(
             body: Center(

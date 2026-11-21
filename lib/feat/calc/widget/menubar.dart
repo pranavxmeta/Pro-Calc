@@ -24,23 +24,6 @@ class const CalcMenubar({
     final size = isCompact ? 34.0 : 40.0;
     final iconSize = isCompact ? 18.0 : 22.0;
 
-    final actions =
-        customButtons ??
-        [
-          if (onPaste != null)
-            (
-              icon: FluentIcons.clipboard_paste_24_regular,
-              tooltip: 'Paste',
-              onTap: onPaste,
-            ),
-          if (onToolbox != null)
-            (
-              icon: FluentIcons.toolbox_24_regular,
-              tooltip: 'Toolbox',
-              onTap: onToolbox,
-            ),
-        ];
-
     return Container(
       alignment: .centerLeft,
       padding: const .symmetric(horizontal: 4.0, vertical: 2.0),
@@ -50,6 +33,7 @@ class const CalcMenubar({
         child: Row(
           mainAxisSize: .min,
           children: [
+            // 1. Copy Button
             if (onCopy != null)
               _CopyButton(
                 onCopy: onCopy!,
@@ -58,41 +42,55 @@ class const CalcMenubar({
                 iconSize: iconSize,
               ),
 
-            // Button 1: Toggle Keypad Matrix (5x7 Scientific <-> 4x5 Basic)
-            if (onToggleReducedKeypad != null) ...[
+            // 2. Paste Button
+            if (onPaste != null) ...[
               const SizedBox(width: 4.0),
               IconButton(
                 icon: Icon(
-                  FluentIcons.table_simple_24_regular,
+                  FluentIcons.clipboard_paste_24_regular,
                   size: iconSize,
-                  color: isReducedKeypad ? theme.colorScheme.primary : color,
+                  color: color,
                 ),
-                tooltip: isReducedKeypad
-                    ? 'Full Scientific Matrix'
-                    : 'Basic 4x5 Keypad',
-                onPressed: onToggleReducedKeypad,
+                tooltip: 'Paste',
+                onPressed: onPaste,
                 style: IconButton.styleFrom(
-                  backgroundColor: isReducedKeypad
-                      ? theme.colorScheme.primary.withValues(alpha: 0.14)
-                      : Colors.transparent,
+                  backgroundColor: Colors.transparent,
                   minimumSize: Size(size, size),
                   padding: .zero,
                 ),
               ),
             ],
 
-            // Button 2: Toggle Tape Mode (Single-line <-> Vertical Ledger)
-            if (onToggleVertical != null) ...[
+            // 3. Toggle Keypad Matrix (Basic 2x2 Operators <-> fx Scientific)
+            if (onToggleReducedKeypad != null) ...[
               const SizedBox(width: 4.0),
               IconButton(
                 icon: Icon(
-                  FluentIcons.arrow_sort_down_lines_24_regular,
+                  isReducedKeypad
+                      ? FluentIcons.math_formula_24_regular
+                      : FluentIcons.math_symbols_24_regular,
+                  size: iconSize,
+                  color: isReducedKeypad ? theme.colorScheme.primary : color,
+                ),
+                tooltip: isReducedKeypad ? 'Sci Mode' : 'Basic Mode',
+                onPressed: onToggleReducedKeypad,
+                style: IconButton.styleFrom(
+                  minimumSize: Size(size, size),
+                  padding: .zero,
+                ),
+              ),
+            ],
+
+            // 4. Toggle Tape Mode (Single-line <-> Vertical Ledger)
+            if (isReducedKeypad && onToggleVertical != null) ...[
+              const SizedBox(width: 4.0),
+              IconButton(
+                icon: Icon(
+                  FluentIcons.receipt_24_regular,
                   size: iconSize,
                   color: isVerticalMode ? theme.colorScheme.primary : color,
                 ),
-                tooltip: isVerticalMode
-                    ? 'Standard Mode'
-                    : 'Vertical Entry Mode',
+                tooltip: isVerticalMode ? 'Standard Mode' : 'Vertical Mode',
                 onPressed: onToggleVertical,
                 style: IconButton.styleFrom(
                   backgroundColor: isVerticalMode
@@ -104,19 +102,21 @@ class const CalcMenubar({
               ),
             ],
 
-            for (final btn in actions) ...[
-              const SizedBox(width: 4.0),
-              IconButton(
-                icon: Icon(btn.icon, size: iconSize, color: color),
-                tooltip: btn.tooltip,
-                onPressed: btn.onTap,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  minimumSize: Size(size, size),
-                  padding: .zero,
+            // 5. Custom Buttons
+            if (customButtons != null)
+              for (final btn in customButtons!) ...[
+                const SizedBox(width: 4.0),
+                IconButton(
+                  icon: Icon(btn.icon, size: iconSize, color: color),
+                  tooltip: btn.tooltip,
+                  onPressed: btn.onTap,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    minimumSize: Size(size, size),
+                    padding: .zero,
+                  ),
                 ),
-              ),
-            ],
+              ],
           ],
         ),
       ),
